@@ -64,6 +64,10 @@ body {
     @apply w-full px-3 py-2 border border-mm-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mm-yellow focus:border-transparent;
   }
 
+  .input-dark {
+    @apply w-full px-3 py-2 rounded-lg border border-mm-gray-600 bg-mm-gray-900 text-mm-gray-100 focus:outline-none focus:ring-2 focus:ring-mm-yellow focus:border-transparent text-sm;
+  }
+
   .card {
     @apply bg-white rounded-lg shadow-base border border-mm-gray-200 p-6;
   }
@@ -129,4 +133,96 @@ body {
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+/* ===== Mapa / Leaflet ===== */
+.mm-pin-wrapper {
+  background: transparent;
+  border: none;
+}
+
+.mm-pin {
+  width: 28px;
+  height: 28px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  border: 3px solid #000000;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.mm-pin:hover {
+  transform: rotate(-45deg) scale(1.2);
+}
+
+.mm-pin-activo {
+  background: #ffcc00;
+}
+
+.mm-pin-inactivo {
+  background: #9ca3af;
+}
+
+.leaflet-container {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: #111827;
+}
+
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: #1f2937;
+  color: #f3f4f6;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+}
+
+.leaflet-popup-content-wrapper {
+  border: 2px solid #ffcc00;
+  border-radius: 0.75rem;
+}
+
+.leaflet-popup-content {
+  margin: 0.75rem 1rem;
+}
+
+.popup-concesionario-badges {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.popup-concesionario-titulo {
+  margin: 0;
+  color: #ffcc00;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.popup-concesionario-texto {
+  margin: 0.125rem 0;
+  color: #d1d5db;
+  font-size: 0.8rem;
+  line-height: 1.25;
+}
+
+.badge-estado {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.badge-estado.activo {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.badge-estado.inactivo {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
 }

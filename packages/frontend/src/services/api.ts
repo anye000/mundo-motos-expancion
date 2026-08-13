@@ -1,10 +1,16 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios'
-import { ApiResponse } from '@types/index'
+import { ApiResponse, PaginatedResponse } from '../types/index'
+import {
+  Concesionario,
+  ConcesionarioFilters,
+  CreateConcesionarioInput,
+  UpdateConcesionarioInput,
+} from '../types/concesionario'
 
 class ApiService {
   private client: AxiosInstance
 
-  constructor(baseURL: string = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api') {
+  constructor(baseURL: string = import.meta.env.VITE_API_BASE_URL || '/api') {
     this.client = axios.create({
       baseURL,
       headers: {
@@ -96,6 +102,47 @@ class ApiService {
         error: error.response?.data?.error || error.message,
       }
     }
+  }
+
+  /**
+   * GET /api/v1/concesionarios - lista con filtros de ciudad, departamento y
+   * estado operativo. Devuelve la paginación desempaquetada.
+   */
+  async getConcesionarios(filters: ConcesionarioFilters = {}): Promise<PaginatedResponse<Concesionario>> {
+    const response = await this.get<PaginatedResponse<Concesionario>>('/v1/concesionarios', {
+      params: filters,
+    })
+    if (!response.success || !response.data) {
+      throw new Error(response.error || 'Error al obtener los concesionarios')
+    }
+    return response.data
+  }
+
+  /** GET /api/v1/concesionarios/:id - obtiene un concesionario por id. */
+  async getConcesionarioById(id: string): Promise<Concesionario> {
+    const response = await this.get<Concesionario>(`/v1/concesionarios/${id}`)
+    if (!response.success || !response.data) {
+      throw new Error(response.error || 'Concesionario no encontrado')
+    }
+    return response.data
+  }
+
+  /** POST /api/v1/concesionarios - crea un concesionario. */
+  async createConcesionario(input: CreateConcesionarioInput): Promise<Concesionario> {
+    const response = await this.post<Concesionario>('/v1/concesionarios', input)
+    if (!response.success || !response.data) {
+      throw new Error(response.error || 'Error al crear el concesionario')
+    }
+    return response.data
+  }
+
+  /** PUT /api/v1/concesionarios/:id - actualiza datos o estado operativo. */
+  async updateConcesionario(id: string, input: UpdateConcesionarioInput): Promise<Concesionario> {
+    const response = await this.put<Concesionario>(`/v1/concesionarios/${id}`, input)
+    if (!response.success || !response.data) {
+      throw new Error(response.error || 'Error al actualizar el concesionario')
+    }
+    return response.data
   }
 }
 

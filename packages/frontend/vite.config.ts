@@ -126,10 +126,20 @@ export default defineConfig({
     minify: 'terser',
     rollupOptions: {
       output: {
-        manualChunks: {
-          react: ['react', 'react-dom'],
-          leaflet: ['leaflet', 'react-leaflet'],
-          ui: ['@radix-ui/react-dialog', '@radix-ui/react-popover'],
+        // manualChunks en forma de función: Rollup solo la invoca para módulos
+        // que existen en el grafo, de modo que dependencias ausentes o vacías
+        // nunca provocan un fallo del build (a diferencia de la forma objeto).
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('leaflet')) {
+              return 'leaflet'
+            }
+            if (id.includes('react') || id.includes('react-dom') || id.includes('scheduler')) {
+              return 'react'
+            }
+            return 'vendor'
+          }
+          return undefined
         },
       },
     },
