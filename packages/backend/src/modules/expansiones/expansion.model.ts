@@ -14,6 +14,7 @@ export type TipoExpansion = 'apertura' | 'ampliacion' | 'relocalizacion' | 'otro
 export interface Expansion {
   id: string;
   concesionario: string;
+  concesionario_id: string | null;
   locacion: string;
   fecha_apertura: string;
   estado: EstadoExpansion;
@@ -32,6 +33,7 @@ export interface Expansion {
 /** Campos requeridos para crear una expansión. */
 export interface CreateExpansionInput {
   concesionario: string;
+  concesionario_id?: string | null;
   locacion?: string;
   fecha_apertura: string;
   estado?: EstadoExpansion;
@@ -47,6 +49,7 @@ export interface CreateExpansionInput {
 /** Campos actualizables (parciales) de una expansión. */
 export interface UpdateExpansionInput {
   concesionario?: string;
+  concesionario_id?: string | null;
   locacion?: string;
   fecha_apertura?: string;
   estado?: EstadoExpansion;

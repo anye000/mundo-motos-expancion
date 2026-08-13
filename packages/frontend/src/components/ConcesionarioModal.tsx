@@ -4,7 +4,7 @@ import { MapPin, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { apiService } from '@services/api'
 import { iconoConcesionario } from '@components/MapaConcesionarios'
-import { Concesionario, EstadoOperativo } from '../types/concesionario'
+import { Concesionario, EstadoOperativo, TipoExpansion } from '../types/concesionario'
 
 const CENTRO_COLOMBIA: [number, number] = [4.60971, -74.08175]
 
@@ -20,6 +20,8 @@ interface FormConcesionario {
   latitud: string
   longitud: string
   estado: EstadoOperativo
+  fecha_apertura_programada: string
+  tipo_expansion: string
 }
 
 const FORM_INICIAL: FormConcesionario = {
@@ -34,6 +36,8 @@ const FORM_INICIAL: FormConcesionario = {
   latitud: '',
   longitud: '',
   estado: 'activo',
+  fecha_apertura_programada: '',
+  tipo_expansion: 'apertura',
 }
 
 /** Captura clics en el mini-mapa para fijar las coordenadas. */
@@ -53,6 +57,10 @@ export interface ConcesionarioModalProps {
   onGuardado: (concesionario: Concesionario) => void
 }
 
+function esEstadoExpansion(estado: EstadoOperativo): boolean {
+  return ['proximo', 'en_ejecucion', 'completado'].includes(estado)
+}
+
 function aFormulario(concesionario: Concesionario): FormConcesionario {
   return {
     nombre: concesionario.nombre,
@@ -66,6 +74,8 @@ function aFormulario(concesionario: Concesionario): FormConcesionario {
     latitud: String(concesionario.latitud),
     longitud: String(concesionario.longitud),
     estado: concesionario.estado,
+    fecha_apertura_programada: concesionario.fecha_apertura_programada ?? '',
+    tipo_expansion: concesionario.tipo_expansion,
   }
 }
 
@@ -124,6 +134,11 @@ export function ConcesionarioModal({
       setError('Ingresa coordenadas válidas (usa el mapa o los campos lat/lng)')
       return
     }
+    const esEstadoExpansion = ['proximo', 'en_ejecucion', 'completado'].includes(form.estado)
+    if (esEstadoExpansion && !form.fecha_apertura_programada) {
+      setError('La fecha de apertura programada es obligatoria para estados de expansión')
+      return
+    }
 
     setEnviando(true)
     setError(null)
@@ -140,6 +155,8 @@ export function ConcesionarioModal({
         latitud: lat,
         longitud: lng,
         estado: form.estado,
+        fecha_apertura_programada: esEstadoExpansion ? form.fecha_apertura_programada : null,
+        tipo_expansion: form.tipo_expansion as TipoExpansion,
       }
       const guardado = concesionario
         ? await apiService.updateConcesionario(concesionario.id, payload)
@@ -165,7 +182,8 @@ export function ConcesionarioModal({
       onClick={onCerrar}
     >
       <div
-        className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl bg-mm-gray-800 border border-mm-gray-600 shadow-xl animate-fadeInDown"
+        className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl bg-black border border-mm-gray-700 shadow-xl animate-fadeInDown"
+        style={{ colorScheme: 'dark' }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b-2 border-mm-yellow px-6 py-4">
@@ -242,8 +260,41 @@ export function ConcesionarioModal({
               >
                 <option value="activo">Activo</option>
                 <option value="inactivo">Inactivo</option>
+                <option value="proximo">Próximo</option>
+                <option value="en_ejecucion">En ejecución</option>
+                <option value="completado">Completado</option>
               </select>
             </label>
+            {esEstadoExpansion(form.estado) && (
+              <>
+                <label className="block">
+                  <span className="mb-1 block text-sm font-medium text-mm-gray-300">
+                    Tipo de expansión
+                  </span>
+                  <select
+                    className="input-dark"
+                    value={form.tipo_expansion}
+                    onChange={(e) => actualizar('tipo_expansion', e.target.value)}
+                  >
+                    <option value="apertura">Apertura</option>
+                    <option value="ampliacion">Ampliación</option>
+                    <option value="relocalizacion">Relocalización</option>
+                    <option value="otro">Otro</option>
+                  </select>
+                </label>
+                <label className="block">
+                  <span className="mb-1 block text-sm font-medium text-mm-gray-300">
+                    Apertura programada *
+                  </span>
+                  <input
+                    type="date"
+                    className="input-dark"
+                    value={form.fecha_apertura_programada}
+                    onChange={(e) => actualizar('fecha_apertura_programada', e.target.value)}
+                  />
+                </label>
+              </>
+            )}
             <label className="block">
               <span className="mb-1 block text-sm font-medium text-mm-gray-300">Ciudad *</span>
               <input

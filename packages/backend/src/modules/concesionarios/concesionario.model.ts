@@ -6,7 +6,14 @@
  * Se usa snake_case para alinear directamente con las columnas de Supabase.
  */
 
-export type EstadoOperativo = 'activo' | 'inactivo';
+export type EstadoOperativo =
+  | 'activo'
+  | 'inactivo'
+  | 'proximo'
+  | 'en_ejecucion'
+  | 'completado';
+
+export type TipoExpansion = 'apertura' | 'ampliacion' | 'relocalizacion' | 'otro';
 
 /** Fila completa de la tabla `concesionarios` devuelta por Supabase. */
 export interface Concesionario {
@@ -23,6 +30,8 @@ export interface Concesionario {
   longitud: number;
   gerente_id: string | null;
   estado: EstadoOperativo;
+  fecha_apertura_programada: string | null;
+  tipo_expansion: string;
   metadatos: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
@@ -43,6 +52,8 @@ export interface CreateConcesionarioInput {
   longitud: number;
   gerente_id?: string | null;
   estado?: EstadoOperativo;
+  fecha_apertura_programada?: string | null;
+  tipo_expansion?: TipoExpansion;
   metadatos?: Record<string, unknown> | null;
 }
 
@@ -60,6 +71,8 @@ export interface UpdateConcesionarioInput {
   longitud?: number;
   gerente_id?: string | null;
   estado?: EstadoOperativo;
+  fecha_apertura_programada?: string | null;
+  tipo_expansion?: TipoExpansion;
   metadatos?: Record<string, unknown> | null;
 }
 

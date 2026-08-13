@@ -17,13 +17,38 @@ import {
   PaginatedConcesionarios,
   EstadoOperativo,
 } from './concesionario.model';
+import { sincronizarExpansion } from '../expansiones/expansion.service';
 
 const TABLE = 'concesionarios';
-const ESTADOS_VALIDOS: EstadoOperativo[] = ['activo', 'inactivo'];
+const ESTADOS_VALIDOS: EstadoOperativo[] = [
+  'activo',
+  'inactivo',
+  'proximo',
+  'en_ejecucion',
+  'completado',
+];
+const TIPOS_EXPANSION_VALIDOS = ['apertura', 'ampliacion', 'relocalizacion', 'otro'] as const;
+type TipoExpansion = (typeof TIPOS_EXPANSION_VALIDOS)[number];
 const LIMIT_MAX = 100;
 
 function isEstadoOperativo(value: unknown): value is EstadoOperativo {
   return typeof value === 'string' && (ESTADOS_VALIDOS as string[]).includes(value);
+}
+
+function isTipoExpansion(value: unknown): value is TipoExpansion {
+  return (
+    typeof value === 'string' && (TIPOS_EXPANSION_VALIDOS as readonly string[]).includes(value)
+  );
+}
+
+function validateFechaOpcional(value: unknown, campo: string): string | null {
+  if (value === undefined || value === null || value === '') {
+    return null;
+  }
+  if (typeof value !== 'string' || Number.isNaN(Date.parse(value))) {
+    throw new ApiError(`El campo "${campo}" debe ser una fecha válida (YYYY-MM-DD)`, 400);
+  }
+  return value.trim();
 }
 
 function validateRequiredString(value: unknown, campo: string): string {
@@ -122,6 +147,14 @@ export async function createConcesionario(input: CreateConcesionarioInput): Prom
   const longitud = validateNumber(input.longitud, 'longitud', -180, 180);
   const estado: EstadoOperativo =
     input.estado && isEstadoOperativo(input.estado) ? input.estado : 'activo';
+  const fechaAperturaProgramada = validateFechaOpcional(
+    input.fecha_apertura_programada,
+    'fecha_apertura_programada'
+  );
+  const tipoExpansion: TipoExpansion =
+    input.tipo_expansion && isTipoExpansion(input.tipo_expansion)
+      ? input.tipo_expansion
+      : 'apertura';
   const metadatos = input.metadatos ?? {};
 
   const now = new Date().toISOString();
@@ -141,6 +174,8 @@ export async function createConcesionario(input: CreateConcesionarioInput): Prom
       longitud,
       gerente_id: input.gerente_id ?? null,
       estado,
+      fecha_apertura_programada: fechaAperturaProgramada,
+      tipo_expansion: tipoExpansion,
       metadatos,
       created_at: now,
       updated_at: now,
@@ -153,7 +188,9 @@ export async function createConcesionario(input: CreateConcesionarioInput): Prom
     throw mapSupabaseError(error, 'Error al crear el concesionario');
   }
 
-  return data as Concesionario;
+  const creado = data as Concesionario;
+  await sincronizarExpansion(creado);
+  return creado;
 }
 
 /** Actualiza los datos o el estado operativo de un concesionario. */
@@ -208,6 +245,21 @@ export async function updateConcesionario(
     }
     updates.estado = input.estado;
   }
+  if (input.fecha_apertura_programada !== undefined) {
+    updates.fecha_apertura_programada = validateFechaOpcional(
+      input.fecha_apertura_programada,
+      'fecha_apertura_programada'
+    );
+  }
+  if (input.tipo_expansion !== undefined) {
+    if (!isTipoExpansion(input.tipo_expansion)) {
+      throw new ApiError(
+        `Tipo de expansión inválido. Valores válidos: ${TIPOS_EXPANSION_VALIDOS.join(', ')}`,
+        400
+      );
+    }
+    updates.tipo_expansion = input.tipo_expansion;
+  }
   if (input.metadatos !== undefined) {
     updates.metadatos = input.metadatos;
   }
@@ -228,12 +280,15 @@ export async function updateConcesionario(
     throw new ApiError('Concesionario no encontrado', 404);
   }
 
-  return data as Concesionario;
+  const actualizado = data as Concesionario;
+  await sincronizarExpansion(actualizado);
+  return actualizado;
 }
 
 /**
- * Elimina físicamente un concesionario. El historial de interacciones CRM se
- * elimina en cascada (ON DELETE CASCADE en interacciones_crm).
+ * Elimina físicamente un concesionario. El historial de interacciones CRM y las
+ * expansiones vinculadas (cronograma/calendario) se eliminan en cascada
+ * (ON DELETE CASCADE en interacciones_crm y expansiones.concesionario_id).
  */
 export async function deleteConcesionario(id: string): Promise<void> {
   if (!id) {

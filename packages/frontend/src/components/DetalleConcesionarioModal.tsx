@@ -17,7 +17,9 @@ export function DetalleConcesionarioModal({
 }: DetalleConcesionarioModalProps) {
   if (!concesionario) return null
 
-  const activo = concesionario.estado === 'activo'
+  const esEstadoExpansion = ['proximo', 'en_ejecucion', 'completado'].includes(
+    concesionario.estado
+  )
 
   return (
     <div
@@ -49,12 +51,26 @@ export function DetalleConcesionarioModal({
               <p className="text-xs font-medium text-mm-gray-400">Estado operativo</p>
               <span
                 className={`mt-1 inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${
-                  activo
+                  concesionario.estado === 'activo'
                     ? 'bg-mm-success/15 text-mm-success border-mm-success/30'
-                    : 'bg-mm-error/15 text-mm-error border-mm-error/30'
+                    : concesionario.estado === 'inactivo'
+                      ? 'bg-mm-error/15 text-mm-error border-mm-error/30'
+                      : concesionario.estado === 'proximo'
+                        ? 'bg-mm-yellow/15 text-mm-yellow border-mm-yellow/30'
+                        : concesionario.estado === 'en_ejecucion'
+                          ? 'bg-mm-warning/15 text-mm-warning border-mm-warning/30'
+                          : 'bg-mm-success/15 text-mm-success border-mm-success/30'
                 }`}
               >
-                {activo ? 'Activo' : 'Inactivo'}
+                {concesionario.estado === 'activo'
+                  ? 'Activo'
+                  : concesionario.estado === 'inactivo'
+                    ? 'Inactivo'
+                    : concesionario.estado === 'proximo'
+                      ? 'Próximo'
+                      : concesionario.estado === 'en_ejecucion'
+                        ? 'En ejecución'
+                        : 'Completado'}
               </span>
             </div>
             <div>
@@ -88,6 +104,22 @@ export function DetalleConcesionarioModal({
                 {concesionario.email}
               </p>
             </div>
+            {esEstadoExpansion && (
+              <div>
+                <p className="text-xs font-medium text-mm-gray-400">Tipo de expansión</p>
+                <p className="mt-1 text-sm capitalize text-mm-gray-200">
+                  {concesionario.tipo_expansion.replace('_', ' ')}
+                </p>
+              </div>
+            )}
+            {concesionario.fecha_apertura_programada && (
+              <div>
+                <p className="text-xs font-medium text-mm-gray-400">Apertura programada</p>
+                <p className="mt-1 text-sm text-mm-gray-200">
+                  {concesionario.fecha_apertura_programada}
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="border-t border-mm-gray-700 pt-5">

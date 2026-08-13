@@ -1,6 +1,13 @@
 /** Tipos del módulo Concesionarios alineados con el backend (snake_case). */
 
-export type EstadoOperativo = 'activo' | 'inactivo';
+export type EstadoOperativo =
+  | 'activo'
+  | 'inactivo'
+  | 'proximo'
+  | 'en_ejecucion'
+  | 'completado';
+
+export type TipoExpansion = 'apertura' | 'ampliacion' | 'relocalizacion' | 'otro';
 
 export interface Concesionario {
   id: string;
@@ -16,6 +23,8 @@ export interface Concesionario {
   longitud: number;
   gerente_id: string | null;
   estado: EstadoOperativo;
+  fecha_apertura_programada: string | null;
+  tipo_expansion: string;
   metadatos: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
@@ -35,6 +44,8 @@ export interface CreateConcesionarioInput {
   longitud: number;
   gerente_id?: string | null;
   estado?: EstadoOperativo;
+  fecha_apertura_programada?: string | null;
+  tipo_expansion?: TipoExpansion;
   metadatos?: Record<string, unknown> | null;
 }
 
@@ -51,6 +62,8 @@ export interface UpdateConcesionarioInput {
   longitud?: number;
   gerente_id?: string | null;
   estado?: EstadoOperativo;
+  fecha_apertura_programada?: string | null;
+  tipo_expansion?: TipoExpansion;
   metadatos?: Record<string, unknown> | null;
 }
 

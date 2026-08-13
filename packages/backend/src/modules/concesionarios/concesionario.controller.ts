@@ -11,7 +11,13 @@ import { sendPaginated, sendSuccess } from '@utils/helpers';
 import * as concesionarioService from './concesionario.service';
 import { ConcesionarioFilters, EstadoOperativo } from './concesionario.model';
 
-const ESTADOS_VALIDOS: EstadoOperativo[] = ['activo', 'inactivo'];
+const ESTADOS_VALIDOS: EstadoOperativo[] = [
+  'activo',
+  'inactivo',
+  'proximo',
+  'en_ejecucion',
+  'completado',
+];
 
 function queryString(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim() !== '' ? value.trim() : undefined;

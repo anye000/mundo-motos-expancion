@@ -164,6 +164,18 @@ body {
   background: #a3a3a3;
 }
 
+.mm-pin-proximo {
+  background: #ffcc00;
+}
+
+.mm-pin-en_ejecucion {
+  background: #f59e0b;
+}
+
+.mm-pin-completado {
+  background: #10b981;
+}
+
 .leaflet-container {
   font-family: 'Inter', system-ui, sans-serif;
   background: #000000;
@@ -225,6 +237,24 @@ body {
   background: rgba(239, 68, 68, 0.15);
   color: #ef4444;
   border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.badge-estado.proximo {
+  background: rgba(255, 204, 0, 0.15);
+  color: #ffcc00;
+  border: 1px solid rgba(255, 204, 0, 0.3);
+}
+
+.badge-estado.en_ejecucion {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.badge-estado.completado {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
 /* ─────────────────────────────────────────────────────────────

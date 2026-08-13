@@ -19,14 +19,28 @@ import { ConfirmarEliminacionModal } from '@components/ConfirmarEliminacionModal
 import { DetalleConcesionarioModal } from '@components/DetalleConcesionarioModal'
 import { Concesionario, EstadoOperativo } from '../types/concesionario'
 
+const ESTADO_LABEL: Record<EstadoOperativo, string> = {
+  activo: 'Activo',
+  inactivo: 'Inactivo',
+  proximo: 'Próximo',
+  en_ejecucion: 'En ejecución',
+  completado: 'Completado',
+}
+
+const ESTADO_BADGE: Record<EstadoOperativo, string> = {
+  activo: 'bg-mm-success/15 text-mm-success border-mm-success/30',
+  inactivo: 'bg-mm-error/15 text-mm-error border-mm-error/30',
+  proximo: 'bg-mm-yellow/15 text-mm-yellow border-mm-yellow/30',
+  en_ejecucion: 'bg-mm-warning/15 text-mm-warning border-mm-warning/30',
+  completado: 'bg-mm-success/15 text-mm-success border-mm-success/30',
+}
+
 function BadgeEstado({ estado }: { estado: EstadoOperativo }) {
-  return estado === 'activo' ? (
-    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-mm-success/15 text-mm-success border border-mm-success/30">
-      Activo
-    </span>
-  ) : (
-    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-mm-error/15 text-mm-error border border-mm-error/30">
-      Inactivo
+  return (
+    <span
+      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${ESTADO_BADGE[estado]}`}
+    >
+      {ESTADO_LABEL[estado]}
     </span>
   )
 }
@@ -215,6 +229,9 @@ export function DashboardConcesionarios() {
                   <option value="">Todos los estados</option>
                   <option value="activo">Activo</option>
                   <option value="inactivo">Inactivo</option>
+                  <option value="proximo">Próximo</option>
+                  <option value="en_ejecucion">En ejecución</option>
+                  <option value="completado">Completado</option>
                 </select>
               </label>
             </div>

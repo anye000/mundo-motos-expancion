@@ -7,10 +7,9 @@ const CENTRO_COLOMBIA: [number, number] = [4.60971, -74.08175]
 
 /** Crea el icono personalizado (pin) con la identidad de Mundo Motos. */
 export function iconoConcesionario(estado: EstadoOperativo): L.DivIcon {
-  const activo = estado === 'activo'
   return L.divIcon({
     className: 'mm-pin-wrapper',
-    html: `<div class="mm-pin ${activo ? 'mm-pin-activo' : 'mm-pin-inactivo'}"></div>`,
+    html: `<div class="mm-pin mm-pin-${estado}"></div>`,
     iconSize: [28, 28],
     iconAnchor: [14, 28],
     popupAnchor: [0, -30],
@@ -105,7 +104,15 @@ export function MapaConcesionarios({
                 <div>
                   <div className="popup-concesionario-badges">
                     <span className={`badge-estado ${concesionario.estado}`}>
-                      {concesionario.estado === 'activo' ? 'Activo' : 'Inactivo'}
+                      {concesionario.estado === 'activo'
+                        ? 'Activo'
+                        : concesionario.estado === 'inactivo'
+                          ? 'Inactivo'
+                          : concesionario.estado === 'proximo'
+                            ? 'Próximo'
+                            : concesionario.estado === 'en_ejecucion'
+                              ? 'En ejecución'
+                              : 'Completado'}
                     </span>
                   </div>
                   <h3 className="popup-concesionario-titulo">{concesionario.nombre}</h3>

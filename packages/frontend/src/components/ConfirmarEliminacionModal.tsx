@@ -52,8 +52,8 @@ export function ConfirmarEliminacionModal({
             <span className="font-semibold text-white">{concesionario.nombre}</span>?
           </p>
           <p className="rounded-lg bg-mm-error/10 border border-mm-error/40 px-3 py-2 text-xs text-mm-error">
-            Esta acción eliminará también el historial de interacciones CRM del concesionario.
-            No se puede deshacer.
+            Esta acción eliminará también el historial de interacciones CRM del concesionario y
+            su apertura programada del calendario de expansiones. No se puede deshacer.
           </p>
 
           <div className="flex justify-end gap-3 border-t border-mm-gray-700 pt-4">

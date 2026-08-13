@@ -17,9 +17,11 @@ import {
   PaginatedExpansiones,
   EstadoExpansion,
 } from './expansion.model';
+import type { Concesionario, EstadoOperativo } from '../concesionarios/concesionario.model';
 
 const TABLE = 'expansiones';
 const ESTADOS_VALIDOS: EstadoExpansion[] = ['proximo', 'en_ejecucion', 'completado'];
+const ESTADOS_EXPANSION: EstadoOperativo[] = ['proximo', 'en_ejecucion', 'completado'];
 const LIMIT_MAX = 100;
 const AVANCE_MIN = 0;
 const AVANCE_MAX = 100;
@@ -60,6 +62,53 @@ function validateCoordenada(value: unknown, campo: string, min: number, max: num
     throw new ApiError(`El campo "${campo}" debe estar entre ${min} y ${max}`, 400);
   }
   return value;
+}
+
+/** Restaura una expansión soft-deleted (reactivación desde el concesionario). */
+async function restaurarExpansion(id: string): Promise<void> {
+  const { error } = await supabase
+    .from(TABLE)
+    .update({ deleted_at: null, updated_at: new Date().toISOString() })
+    .eq('id', id);
+  if (error) {
+    throw mapSupabaseError(error, 'Error al restaurar la expansión');
+  }
+}
+
+/** Soft delete directo por id (usado por la sincronización del concesionario). */
+async function softDeleteExpansionById(id: string): Promise<void> {
+  const { error } = await supabase
+    .from(TABLE)
+    .update({ deleted_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+    .eq('id', id);
+  if (error) {
+    throw mapSupabaseError(error, 'Error al eliminar la expansión');
+  }
+}
+
+/**
+ * Obtiene la expansión vinculada a un concesionario. Incluye las soft-deleted
+ * para poder restaurarlas sin duplicar filas al reactivar el estado.
+ */
+export async function getExpansionByConcesionarioId(
+  concesionarioId: string
+): Promise<Expansion | null> {
+  if (!concesionarioId) {
+    return null;
+  }
+  const { data, error } = await supabase
+    .from(TABLE)
+    .select('*')
+    .eq('concesionario_id', concesionarioId)
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle()
+    .returns<Expansion | null>();
+
+  if (error) {
+    throw mapSupabaseError(error, 'Error al obtener la expansión del concesionario');
+  }
+  return data as Expansion | null;
 }
 
 /**
@@ -174,6 +223,7 @@ export async function createExpansion(input: CreateExpansionInput): Promise<Expa
     .from(TABLE)
     .insert({
       concesionario,
+      concesionario_id: input.concesionario_id ?? null,
       locacion,
       fecha_apertura: fechaApertura,
       estado,
@@ -214,6 +264,9 @@ export async function updateExpansion(id: string, input: UpdateExpansionInput): 
 
   if (input.concesionario !== undefined) {
     updates.concesionario = validateRequiredString(input.concesionario, 'concesionario');
+  }
+  if (input.concesionario_id !== undefined) {
+    updates.concesionario_id = input.concesionario_id;
   }
   if (input.ciudad !== undefined || input.departamento !== undefined) {
     const ubicacion = resolveUbicacion(input);
@@ -290,4 +343,62 @@ export async function deleteExpansion(id: string): Promise<void> {
   if (!data) {
     throw new ApiError('Expansión no encontrada', 404);
   }
+}
+
+/**
+ * Sincroniza la expansión vinculada a un concesionario (formulario maestro).
+ *
+ * - Estados de expansión (`proximo`, `en_ejecucion`, `completado`) con fecha
+ *   de apertura programada: upsertea la expansión vinculada, restaurando una
+ *   soft-deleted si existía. Nunca pisa `avance`/`observaciones` (los gestiona
+ *   el cronograma).
+ * - Estados operativos (`activo`, `inactivo`) o sin fecha: soft deletea la
+ *   expansión vinculada si existía.
+ */
+export async function sincronizarExpansion(concesionario: Concesionario): Promise<void> {
+  const esEstadoExpansion = (ESTADOS_EXPANSION as string[]).includes(concesionario.estado);
+  const fechaProgramada = concesionario.fecha_apertura_programada;
+  const tieneFecha =
+    typeof fechaProgramada === 'string' &&
+    fechaProgramada.trim() !== '' &&
+    !Number.isNaN(Date.parse(fechaProgramada));
+
+  const existente = await getExpansionByConcesionarioId(concesionario.id);
+
+  if (!esEstadoExpansion || !tieneFecha) {
+    if (existente && existente.deleted_at === null) {
+      await softDeleteExpansionById(existente.id);
+    }
+    return;
+  }
+
+  if (existente) {
+    if (existente.deleted_at !== null) {
+      await restaurarExpansion(existente.id);
+    }
+    await updateExpansion(existente.id, {
+      concesionario: concesionario.nombre,
+      fecha_apertura: fechaProgramada,
+      estado: concesionario.estado as EstadoExpansion,
+      tipo: concesionario.tipo_expansion,
+      ciudad: concesionario.ciudad,
+      departamento: concesionario.departamento,
+      latitud: concesionario.latitud,
+      longitud: concesionario.longitud,
+    });
+    return;
+  }
+
+  await createExpansion({
+    concesionario: concesionario.nombre,
+    concesionario_id: concesionario.id,
+    fecha_apertura: fechaProgramada,
+    estado: concesionario.estado as EstadoExpansion,
+    tipo: concesionario.tipo_expansion,
+    ciudad: concesionario.ciudad,
+    departamento: concesionario.departamento,
+    latitud: concesionario.latitud,
+    longitud: concesionario.longitud,
+    avance: concesionario.estado === 'completado' ? 100 : 0,
+  });
 }
