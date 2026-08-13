@@ -1,4 +1,38 @@
 /** @type {import('tailwindcss').Config} */
+
+// Escala de grises NEUTROS (sin tinte azul/frío). Reemplaza el 'gray' por
+// defecto de Tailwind, que tiene matiz azulado y NO cumple la marca.
+const escalaNeutra = {
+  50: '#FAFAFA',
+  100: '#F5F5F5',
+  200: '#E5E5E5',
+  300: '#D4D4D4',
+  400: '#A3A3A3',
+  500: '#737373',
+  600: '#525252',
+  700: '#404040',
+  800: '#0A0A0A',
+  900: '#000000',
+  950: '#000000',
+}
+
+// Escala amarilla corporativa: re-mapea la familia de azules/cianes de
+// Tailwind para que NUNCA se pueda generar una utilidad de color azul.
+const escalaAmarillaCorporativa = {
+  50: '#FFF7CC',
+  100: '#FFF1A8',
+  200: '#FFE680',
+  300: '#FFDB4D',
+  400: '#FFD633',
+  DEFAULT: '#FFCC00',
+  500: '#FFCC00',
+  600: '#E6B800',
+  700: '#CC9A00',
+  800: '#B38600',
+  900: '#997300',
+  950: '#664D00',
+}
+
 export default {
   content: [
     "./index.html",
@@ -13,19 +47,8 @@ export default {
         'mm-yellow-dark': '#E6B800',
         'mm-yellow-light': '#FFD633',
         
-        // Escala de grises
-        'mm-gray': {
-          50: '#F9FAFB',
-          100: '#F3F4F6',
-          200: '#E5E7EB',
-          300: '#D1D5DB',
-          400: '#9CA3AF',
-          500: '#6B7280',
-          600: '#4B5563',
-          700: '#374151',
-          800: '#1F2937',
-          900: '#111827',
-        },
+        // Escala de grises (neutros, sin tinte azul)
+        'mm-gray': escalaNeutra,
         
         // Colores de estado
         'mm-success': '#10B981',
@@ -35,6 +58,19 @@ export default {
         // Alias para compatibilidad
         'primary': '#000000',
         'secondary': '#FFCC00',
+
+        // Purga de marca: los grises por defecto de Tailwind pasan a neutros
+        // (cero matiz azulado) y la familia de azules/cianes se re-mapea a la
+        // escala amarilla corporativa (cero utilidades azules posibles).
+        'gray': escalaNeutra,
+        'slate': escalaNeutra,
+        'zinc': escalaNeutra,
+        'stone': escalaNeutra,
+        'neutral': escalaNeutra,
+        'blue': escalaAmarillaCorporativa,
+        'sky': escalaAmarillaCorporativa,
+        'cyan': escalaAmarillaCorporativa,
+        'indigo': escalaAmarillaCorporativa,
       },
       backgroundColor: {
         'mm-dark': '#000000',

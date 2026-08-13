@@ -8,12 +8,15 @@
   --success: #10B981;
   --error: #EF4444;
   --warning: #F59E0B;
+  /* Controles nativos (checkbox/radio/range) con acento amarillo corporativo */
+  accent-color: #FFCC00;
 }
 
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
 
 html {
@@ -156,18 +159,18 @@ body {
 }
 
 .mm-pin-inactivo {
-  background: #9ca3af;
+  background: #a3a3a3;
 }
 
 .leaflet-container {
   font-family: 'Inter', system-ui, sans-serif;
-  background: #111827;
+  background: #000000;
 }
 
 .leaflet-popup-content-wrapper,
 .leaflet-popup-tip {
-  background: #1f2937;
-  color: #f3f4f6;
+  background: #0a0a0a;
+  color: #f5f5f5;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
 }
 
@@ -196,7 +199,7 @@ body {
 
 .popup-concesionario-texto {
   margin: 0.125rem 0;
-  color: #d1d5db;
+  color: #d4d4d4;
   font-size: 0.8rem;
   line-height: 1.25;
 }
@@ -220,4 +223,35 @@ body {
   background: rgba(239, 68, 68, 0.15);
   color: #ef4444;
   border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   PURGA DE MARCA: bloqueo de cualquier azul/cian inyectado
+   (Leaflet, teselas OSM, focus/selección nativos del navegador)
+   ───────────────────────────────────────────────────────────── */
+
+/* Enlaces dentro del contenedor del mapa (Leaflet usa #0078a8) */
+.leaflet-container a {
+  color: #FFCC00 !important;
+}
+
+/* Cuadro de zoom con arrastre (Leaflet usa #38f) */
+.leaflet-zoom-box {
+  border-color: #FFCC00 !important;
+}
+
+/* Teselas del mapa base: neutraliza el azul del imagery (agua/ríos) */
+.leaflet-tile-pane {
+  filter: grayscale(1) sepia(1);
+}
+
+/* Selección de texto: amarillo sobre negro (el navegador usa azul) */
+::selection {
+  background-color: #FFCC00;
+  color: #000000;
+}
+
+/* Anillo de foco: amarillo corporativo (Chromium usa azul) */
+:focus-visible {
+  outline-color: #FFCC00;
 }
