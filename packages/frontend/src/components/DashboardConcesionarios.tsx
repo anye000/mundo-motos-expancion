@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 import {
   Building2,
-  CalendarDays,
   CheckCircle2,
   Filter,
   Loader2,
@@ -18,7 +17,6 @@ import { MapaConcesionarios } from '@components/MapaConcesionarios'
 import { ConcesionarioModal } from '@components/ConcesionarioModal'
 import { ConfirmarEliminacionModal } from '@components/ConfirmarEliminacionModal'
 import { DetalleConcesionarioModal } from '@components/DetalleConcesionarioModal'
-import { CronogramaExpansions } from '@components/CronogramaExpansions'
 import { Concesionario, EstadoOperativo } from '../types/concesionario'
 
 function BadgeEstado({ estado }: { estado: EstadoOperativo }) {
@@ -33,15 +31,7 @@ function BadgeEstado({ estado }: { estado: EstadoOperativo }) {
   )
 }
 
-type TabDashboard = 'concesionarios' | 'expansion'
-
-const TABS: { id: TabDashboard; etiqueta: string; icono: typeof MapPin }[] = [
-  { id: 'concesionarios', etiqueta: 'Concesionarios', icono: MapPin },
-  { id: 'expansion', etiqueta: 'Cronograma de Expansión', icono: CalendarDays },
-]
-
 export function DashboardConcesionarios() {
-  const [tabActivo, setTabActivo] = useState<TabDashboard>('concesionarios')
   const {
     concesionarios,
     total,
@@ -106,35 +96,8 @@ export function DashboardConcesionarios() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Pestañas */}
-      <div className="flex w-fit gap-1 rounded-xl bg-mm-gray-800 border border-mm-gray-700 p-1">
-        {TABS.map((tab) => {
-          const activa = tabActivo === tab.id
-          const Icono = tab.icono
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setTabActivo(tab.id)}
-              className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
-                activa
-                  ? 'bg-mm-yellow text-mm-black'
-                  : 'text-mm-gray-300 hover:bg-mm-gray-700 hover:text-white'
-              }`}
-            >
-              <Icono className="h-4 w-4" />
-              {tab.etiqueta}
-            </button>
-          )
-        })}
-      </div>
-
-      {tabActivo === 'expansion' ? (
-        <CronogramaExpansions />
-      ) : (
-        <>
-          {/* Estadísticas */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* Estadísticas */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="rounded-xl bg-mm-gray-800 border border-mm-gray-700 p-4 flex items-center gap-3">
           <div className="rounded-lg bg-mm-gray-900 p-2.5">
             <Building2 className="h-5 w-5 text-mm-yellow" />
@@ -344,8 +307,6 @@ export function DashboardConcesionarios() {
           </div>
         </aside>
       </div>
-        </>
-      )}
 
       <ConcesionarioModal
         abierto={modalAbierto || editando !== null}
