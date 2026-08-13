@@ -30,6 +30,7 @@ export function DashboardConcesionarios() {
   const [tabActivo, setTabActivo] = useState<TabDashboard>('concesionarios')
   const {
     concesionarios,
+    total,
     cargando,
     error,
     filtros,
@@ -50,11 +51,11 @@ export function DashboardConcesionarios() {
 
   const totales = useMemo(
     () => ({
-      total: concesionarios.length,
+      total,
       activos: concesionarios.filter((c) => c.estado === 'activo').length,
       inactivos: concesionarios.filter((c) => c.estado === 'inactivo').length,
     }),
-    [concesionarios]
+    [concesionarios, total]
   )
 
   return (

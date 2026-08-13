@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { apiService } from '@services/api'
 import { Concesionario, ConcesionarioFilters, EstadoOperativo } from '../types/concesionario'
 
@@ -16,6 +16,7 @@ const FILTROS_INICIALES: FiltrosConcesionarios = {
 
 export interface UseConcesionariosReturn {
   concesionarios: Concesionario[]
+  total: number
   cargando: boolean
   error: string | null
   filtros: FiltrosConcesionarios
@@ -42,25 +43,33 @@ function toConcesionarioFilters(filtros: FiltrosConcesionarios): ConcesionarioFi
  */
 export function useConcesionarios(): UseConcesionariosReturn {
   const [concesionarios, setConcesionarios] = useState<Concesionario[]>([])
+  const [total, setTotal] = useState<number>(0)
   const [cargando, setCargando] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [filtros, setFiltros] = useState<FiltrosConcesionarios>(FILTROS_INICIALES)
   const [ciudades, setCiudades] = useState<string[]>([])
   const [departamentos, setDepartamentos] = useState<string[]>([])
+  const secuencia = useRef(0)
 
   const cargar = useCallback(async (filtrosActivos: FiltrosConcesionarios) => {
+    const id = ++secuencia.current
     setCargando(true)
     setError(null)
     try {
       const resultado = await apiService.getConcesionarios(toConcesionarioFilters(filtrosActivos))
+      if (id !== secuencia.current) return
       setConcesionarios(resultado.data)
+      setTotal(resultado.total ?? resultado.data.length)
       if (!filtrosActivos.ciudad && !filtrosActivos.departamento && !filtrosActivos.estado) {
+        if (id !== secuencia.current) return
         setCiudades(Array.from(new Set(resultado.data.map((c) => c.ciudad))).sort())
         setDepartamentos(Array.from(new Set(resultado.data.map((c) => c.departamento))).sort())
       }
     } catch (e) {
+      if (id !== secuencia.current) return
       setError(e instanceof Error ? e.message : 'Error al cargar los concesionarios')
     } finally {
+      if (id !== secuencia.current) return
       setCargando(false)
     }
   }, [])
@@ -81,6 +90,7 @@ export function useConcesionarios(): UseConcesionariosReturn {
 
   return {
     concesionarios,
+    total,
     cargando,
     error,
     filtros,
