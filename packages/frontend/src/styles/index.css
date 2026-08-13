@@ -8,7 +8,6 @@
   --success: #10B981;
   --error: #EF4444;
   --warning: #F59E0B;
-  --info: #3B82F6;
 }
 
 * {
@@ -82,10 +81,6 @@ body {
 
   .badge-warning {
     @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-mm-warning/10 text-mm-warning;
-  }
-
-  .badge-info {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-mm-info/10 text-mm-info;
   }
 }
 

@@ -31,7 +31,6 @@ export default {
         'mm-success': '#10B981',
         'mm-error': '#EF4444',
         'mm-warning': '#F59E0B',
-        'mm-info': '#3B82F6',
         
         // Alias para compatibilidad
         'primary': '#000000',

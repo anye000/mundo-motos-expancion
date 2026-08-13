@@ -9,7 +9,7 @@ import { TipoInteraccion } from '../types/interaccion'
 import { Usuario } from '../types/usuario'
 
 const TIPO_CONFIG: Record<TipoInteraccion, { label: string; className: string }> = {
-  llamada: { label: 'Llamada', className: 'bg-mm-info/15 text-mm-info border-mm-info/30' },
+  llamada: { label: 'Llamada', className: 'bg-mm-yellow/15 text-mm-yellow border-mm-yellow/30' },
   visita: { label: 'Visita', className: 'bg-mm-warning/15 text-mm-warning border-mm-warning/30' },
   nota_rapida: {
     label: 'Nota rápida',

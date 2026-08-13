@@ -35,25 +35,25 @@ const ESTADO_LABEL: Record<EstadoExpansion, string> = {
 }
 
 const ESTADO_BADGE: Record<EstadoExpansion, string> = {
-  proximo: 'bg-mm-info/15 text-mm-info border-mm-info/30',
+  proximo: 'bg-mm-yellow/15 text-mm-yellow border-mm-yellow/30',
   en_ejecucion: 'bg-mm-warning/15 text-mm-warning border-mm-warning/30',
   completado: 'bg-mm-success/15 text-mm-success border-mm-success/30',
 }
 
 const ESTADO_CHIP: Record<EstadoExpansion, string> = {
-  proximo: 'border-mm-info/40 text-mm-info',
+  proximo: 'border-mm-yellow/40 text-mm-yellow',
   en_ejecucion: 'border-mm-warning/40 text-mm-warning',
   completado: 'border-mm-success/40 text-mm-success',
 }
 
 const ESTADO_DOT: Record<EstadoExpansion, string> = {
-  proximo: 'bg-mm-info',
+  proximo: 'bg-mm-yellow',
   en_ejecucion: 'bg-mm-warning',
   completado: 'bg-mm-success',
 }
 
 const ESTADO_BARRA: Record<EstadoExpansion, string> = {
-  proximo: 'bg-mm-info',
+  proximo: 'bg-mm-yellow',
   en_ejecucion: 'bg-mm-warning',
   completado: 'bg-mm-success',
 }
@@ -189,7 +189,7 @@ export function CronogramaExpansions() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="rounded-xl bg-mm-gray-800 border border-mm-gray-700 p-4 flex items-center gap-3">
           <div className="rounded-lg bg-mm-gray-900 p-2.5">
-            <Rocket className="h-5 w-5 text-mm-info" />
+            <Rocket className="h-5 w-5 text-mm-yellow" />
           </div>
           <div>
             <p className="text-xs font-medium text-mm-gray-400">Próximas</p>
