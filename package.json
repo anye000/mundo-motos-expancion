@@ -1,0 +1,43 @@
+{
+  "name": "mundo-motos-expansion",
+  "version": "1.0.0",
+  "description": "CRM y Dashboard de gestión y geolocalización de concesionarios Mundo Motos",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/frontend",
+    "packages/backend"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "dev:frontend": "turbo run dev --filter=@mundo-motos/frontend",
+    "dev:backend": "turbo run dev --filter=@mundo-motos/backend",
+    "build": "turbo run build",
+    "build:frontend": "turbo run build --filter=@mundo-motos/frontend",
+    "build:backend": "turbo run build --filter=@mundo-motos/backend",
+    "preview": "turbo run preview --filter=@mundo-motos/frontend",
+    "type-check": "turbo run type-check",
+    "lint": "turbo run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,json,md}\"",
+    "clean": "turbo clean && rm -rf node_modules",
+    "test": "turbo run test",
+    "test:watch": "turbo run test:watch"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "eslint": "^8.57.0",
+    "prettier": "^3.2.5",
+    "turbo": "^1.13.0",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "dotenv": "^21.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "packageManager": "npm@10.0.0"
+}
