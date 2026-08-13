@@ -8,6 +8,7 @@ import concesionariosRouter from './modules/concesionarios/concesionario.routes'
 import crmRouter from './modules/crm/crm.routes'
 import usersRouter from './modules/users/user.routes'
 import expansionesRouter from './modules/expansiones/expansion.routes'
+import reportesRouter from './modules/reportes/reporte.routes'
 
 // Cargar variables de entorno
 dotenv.config()
@@ -49,6 +50,7 @@ app.use('/api/v1/concesionarios', concesionariosRouter)
 app.use('/api/v1/crm', crmRouter)
 app.use('/api/v1/users', usersRouter)
 app.use('/api/v1/expansiones', expansionesRouter)
+app.use('/api/v1/reportes', reportesRouter)
 
 // API raíz (placeholder informativo)
 app.use('/api/v1', (_req: Request, res: Response) => {
@@ -60,6 +62,7 @@ app.use('/api/v1', (_req: Request, res: Response) => {
       crm: '/api/v1/crm',
       users: '/api/v1/users',
       expansiones: '/api/v1/expansiones',
+      reportes: '/api/v1/reportes',
     },
   })
 })
