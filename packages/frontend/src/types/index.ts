@@ -15,24 +15,7 @@ export interface User {
   updatedAt: Date
 }
 
-export interface Concesionario {
-  id: UUID
-  nombre: string
-  razonSocial: string
-  nit: string
-  email: string
-  telefono: string
-  ciudad: string
-  departamento: string
-  direccion: string
-  latitud: number
-  longitud: number
-  gerente: UUID
-  estado: 'activo' | 'inactivo'
-  metadatos?: Record<string, any>
-  createdAt: Date
-  updatedAt: Date
-}
+export type { Concesionario, ConcesionarioFilters, CreateConcesionarioInput, UpdateConcesionarioInput, PaginatedConcesionarios, EstadoOperativo } from './concesionario'
 
 export interface Ubicacion {
   id: UUID
