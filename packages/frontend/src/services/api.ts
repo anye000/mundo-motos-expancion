@@ -14,6 +14,7 @@ import {
   CreateExpansionInput,
   UpdateExpansionInput,
 } from '../types/expansion'
+import { ReporteData, ReporteFilters } from '../types/reporte'
 
 class ApiService {
   private client: AxiosInstance
@@ -261,6 +262,15 @@ class ApiService {
     if (!response.success) {
       throw new Error(response.error || 'Error al eliminar la expansión')
     }
+  }
+
+  /** GET /api/v1/reportes - reporte combinado con filtros. */
+  async getReportes(filters: ReporteFilters = {}): Promise<ReporteData> {
+    const response = await this.get<ReporteData>('/reportes', { params: filters })
+    if (!response.success || !response.data) {
+      throw new Error(response.error || 'Error al obtener el reporte')
+    }
+    return response.data
   }
 }
 
