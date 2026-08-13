@@ -3,5 +3,7 @@
  * Gestión de concesionarios Mundo Motos
  */
 
-export { concesionariosRouter, default } from './controller'
-export * from './controller'
+export { default } from './concesionario.routes';
+export * from './concesionario.routes';
+export * from './concesionario.model';
+export * as concesionarioService from './concesionario.service';

@@ -1,7 +1,9 @@
 /**
  * Módulo CRM
- * Gestión de contactos, leads y pipeline de ventas
+ * Interacciones con concesionarios (llamadas, visitas, notas e incidencias)
  */
 
-export { crmRouter, default } from './controller'
-export * from './controller'
+export { default } from './crm.routes';
+export * from './crm.routes';
+export * from './crm.model';
+export * as crmService from './crm.service';

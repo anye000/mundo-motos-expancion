@@ -2,6 +2,12 @@
  * Tipos base para la API Backend
  */
 
+import {
+  Request as ExpressRequest,
+  Response as ExpressResponse,
+  NextFunction as ExpressNextFunction,
+} from 'express'
+
 export type UUID = string & { readonly __uuid: unique symbol }
 
 export interface ApiResponse<T = any> {
@@ -90,8 +96,8 @@ export interface AuthToken {
   rol: string
 }
 
-export type RequestHandler<T = any> = (
-  req: Express.Request & { user?: AuthToken },
-  res: Express.Response,
-  next: Express.NextFunction
+export type RequestHandler = (
+  req: ExpressRequest & { user?: AuthToken },
+  res: ExpressResponse,
+  next: ExpressNextFunction
 ) => Promise<void> | void

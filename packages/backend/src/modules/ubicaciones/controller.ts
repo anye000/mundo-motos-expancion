@@ -3,8 +3,8 @@
  */
 
 import { Router, Request, Response, NextFunction } from 'express'
-import { sendSuccess, sendError, sendPaginated, ApiError } from '@utils/helpers'
-import { Ubicacion } from '@types/index'
+import { sendSuccess, sendPaginated, ApiError } from '@utils/helpers'
+import { Ubicacion } from '../../types/index'
 
 // Mock data
 const ubicaciones: Ubicacion[] = []

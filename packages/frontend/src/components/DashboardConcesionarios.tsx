@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react'
-import { Building2, CheckCircle2, Filter, Loader2, MapPin, Plus, XCircle } from 'lucide-react'
+import { Building2, CalendarDays, CheckCircle2, Filter, Loader2, MapPin, Plus, XCircle } from 'lucide-react'
 import { useConcesionarios } from '@hooks/useConcesionarios'
 import { MapaConcesionarios } from '@components/MapaConcesionarios'
 import { ConcesionarioModal } from '@components/ConcesionarioModal'
+import { DetalleConcesionarioModal } from '@components/DetalleConcesionarioModal'
+import { CronogramaExpansions } from '@components/CronogramaExpansions'
 import { Concesionario, EstadoOperativo } from '../types/concesionario'
 
 function BadgeEstado({ estado }: { estado: EstadoOperativo }) {
@@ -17,7 +19,15 @@ function BadgeEstado({ estado }: { estado: EstadoOperativo }) {
   )
 }
 
+type TabDashboard = 'concesionarios' | 'expansion'
+
+const TABS: { id: TabDashboard; etiqueta: string; icono: typeof MapPin }[] = [
+  { id: 'concesionarios', etiqueta: 'Concesionarios', icono: MapPin },
+  { id: 'expansion', etiqueta: 'Cronograma de Expansión', icono: CalendarDays },
+]
+
 export function DashboardConcesionarios() {
+  const [tabActivo, setTabActivo] = useState<TabDashboard>('concesionarios')
   const {
     concesionarios,
     cargando,
@@ -31,6 +41,12 @@ export function DashboardConcesionarios() {
   } = useConcesionarios()
   const [seleccionado, setSeleccionado] = useState<Concesionario | null>(null)
   const [modalAbierto, setModalAbierto] = useState(false)
+  const [detalle, setDetalle] = useState<Concesionario | null>(null)
+
+  function seleccionar(concesionario: Concesionario) {
+    setSeleccionado(concesionario)
+    setDetalle(concesionario)
+  }
 
   const totales = useMemo(
     () => ({
@@ -43,8 +59,35 @@ export function DashboardConcesionarios() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Estadísticas */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* Pestañas */}
+      <div className="flex w-fit gap-1 rounded-xl bg-mm-gray-800 border border-mm-gray-700 p-1">
+        {TABS.map((tab) => {
+          const activa = tabActivo === tab.id
+          const Icono = tab.icono
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setTabActivo(tab.id)}
+              className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+                activa
+                  ? 'bg-mm-yellow text-mm-black'
+                  : 'text-mm-gray-300 hover:bg-mm-gray-700 hover:text-white'
+              }`}
+            >
+              <Icono className="h-4 w-4" />
+              {tab.etiqueta}
+            </button>
+          )
+        })}
+      </div>
+
+      {tabActivo === 'expansion' ? (
+        <CronogramaExpansions />
+      ) : (
+        <>
+          {/* Estadísticas */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="rounded-xl bg-mm-gray-800 border border-mm-gray-700 p-4 flex items-center gap-3">
           <div className="rounded-lg bg-mm-gray-900 p-2.5">
             <Building2 className="h-5 w-5 text-mm-yellow" />
@@ -93,7 +136,7 @@ export function DashboardConcesionarios() {
           <MapaConcesionarios
             concesionarios={concesionarios}
             seleccionado={seleccionado}
-            onSeleccionar={setSeleccionado}
+            onSeleccionar={seleccionar}
           />
           {cargando && (
             <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/40">
@@ -199,7 +242,7 @@ export function DashboardConcesionarios() {
                     <li key={concesionario.id}>
                       <button
                         type="button"
-                        onClick={() => setSeleccionado(concesionario)}
+                        onClick={() => seleccionar(concesionario)}
                         className={`w-full rounded-lg border px-3 py-2 text-left transition-colors ${
                           activo
                             ? 'border-mm-yellow bg-mm-gray-700'
@@ -224,6 +267,8 @@ export function DashboardConcesionarios() {
           </div>
         </aside>
       </div>
+        </>
+      )}
 
       <ConcesionarioModal
         abierto={modalAbierto}
@@ -234,6 +279,8 @@ export function DashboardConcesionarios() {
           recargar()
         }}
       />
+
+      <DetalleConcesionarioModal concesionario={detalle} onCerrar={() => setDetalle(null)} />
     </div>
   )
 }

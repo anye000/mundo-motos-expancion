@@ -8,6 +8,12 @@ import {
 } from '../types/concesionario'
 import { InteraccionCrm, CreateInteraccionInput } from '../types/interaccion'
 import { Usuario } from '../types/usuario'
+import {
+  Expansion,
+  ExpansionFilters,
+  CreateExpansionInput,
+  UpdateExpansionInput,
+} from '../types/expansion'
 
 class ApiService {
   private client: AxiosInstance
@@ -173,7 +179,7 @@ class ApiService {
    */
   async getInteracciones(concesionarioId: string): Promise<PaginatedResponse<InteraccionCrm>> {
     const response = await this.get<PaginatedResponse<InteraccionCrm>>(
-      `/v1/crm/concesionario/${concesionarioId}`,
+      `/crm/concesionario/${concesionarioId}`,
       { params: { limit: 100 } }
     )
     if (!response.success || !response.data) {
@@ -184,7 +190,7 @@ class ApiService {
 
   /** POST /api/v1/crm - registra una interacción. */
   async createInteraccion(input: CreateInteraccionInput): Promise<InteraccionCrm> {
-    const response = await this.post<InteraccionCrm>('/v1/crm', input)
+    const response = await this.post<InteraccionCrm>('/crm', input)
     if (!response.success || !response.data) {
       throw new Error(response.error || 'Error al registrar la interacción')
     }
@@ -193,11 +199,60 @@ class ApiService {
 
   /** GET /api/v1/users - lista usuarios activos (para selects de responsables). */
   async getUsuarios(): Promise<Usuario[]> {
-    const response = await this.get<Usuario[]>('/v1/users')
+    const response = await this.get<Usuario[]>('/users')
     if (!response.success || !response.data) {
       throw new Error(response.error || 'Error al obtener los usuarios')
     }
     return response.data
+  }
+
+  /**
+   * GET /api/v1/expansiones - lista de proyecciones/aperturas con filtros por
+   * estado, locación y rango de fechas. Devuelve la paginación desempaquetada.
+   */
+  async getExpansiones(filters: ExpansionFilters = {}): Promise<PaginatedResponse<Expansion>> {
+    const response = await this.get<PaginatedResponse<Expansion>>('/expansiones', {
+      params: filters,
+    })
+    if (!response.success || !response.data) {
+      throw new Error(response.error || 'Error al obtener las expansiones')
+    }
+    return response.data
+  }
+
+  /** GET /api/v1/expansiones/:id - obtiene una expansión por id. */
+  async getExpansionById(id: string): Promise<Expansion> {
+    const response = await this.get<Expansion>(`/expansiones/${id}`)
+    if (!response.success || !response.data) {
+      throw new Error(response.error || 'Expansión no encontrada')
+    }
+    return response.data
+  }
+
+  /** POST /api/v1/expansiones - crea una expansión. */
+  async createExpansion(input: CreateExpansionInput): Promise<Expansion> {
+    const response = await this.post<Expansion>('/expansiones', input)
+    if (!response.success || !response.data) {
+      throw new Error(response.error || 'Error al crear la expansión')
+    }
+    return response.data
+  }
+
+  /** PUT /api/v1/expansiones/:id - actualiza datos, estado o avance. */
+  async updateExpansion(id: string, input: UpdateExpansionInput): Promise<Expansion> {
+    const response = await this.put<Expansion>(`/expansiones/${id}`, input)
+    if (!response.success || !response.data) {
+      throw new Error(response.error || 'Error al actualizar la expansión')
+    }
+    return response.data
+  }
+
+  /** DELETE /api/v1/expansiones/:id - elimina (soft delete) una expansión. */
+  async deleteExpansion(id: string): Promise<void> {
+    const response = await this.delete<{ id: string }>(`/expansiones/${id}`)
+    if (!response.success) {
+      throw new Error(response.error || 'Error al eliminar la expansión')
+    }
   }
 }
 
