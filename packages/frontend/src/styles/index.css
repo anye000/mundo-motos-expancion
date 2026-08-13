@@ -8,6 +8,8 @@
   --success: #10B981;
   --error: #EF4444;
   --warning: #F59E0B;
+  /* Modo oscuro para controles nativos (date picker, selects) */
+  color-scheme: dark;
   /* Controles nativos (checkbox/radio/range) con acento amarillo corporativo */
   accent-color: #FFCC00;
 }

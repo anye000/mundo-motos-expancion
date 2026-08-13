@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { apiService } from '@services/api'
-import { EstadoExpansion, Expansion, ExpansionFilters } from '../types/expansion'
+import { CreateExpansionInput, EstadoExpansion, Expansion, ExpansionFilters } from '../types/expansion'
 
 export interface FiltrosExpansiones {
   estado: EstadoExpansion | ''
@@ -20,6 +20,7 @@ export interface UseExpansionesReturn {
   cambiarFiltro: (campo: keyof FiltrosExpansiones, valor: string) => void
   limpiarFiltros: () => void
   recargar: () => void
+  crear: (input: CreateExpansionInput) => Promise<Expansion>
   eliminar: (id: string) => Promise<void>
 }
 
@@ -69,6 +70,15 @@ export function useExpansiones(): UseExpansionesReturn {
     void cargar(filtros)
   }, [cargar, filtros])
 
+  const crear = useCallback(
+    async (input: CreateExpansionInput): Promise<Expansion> => {
+      const creada = await apiService.createExpansion(input)
+      await cargar(filtros)
+      return creada
+    },
+    [cargar, filtros]
+  )
+
   const eliminar = useCallback(
     async (id: string) => {
       await apiService.deleteExpansion(id)
@@ -85,6 +95,7 @@ export function useExpansiones(): UseExpansionesReturn {
     cambiarFiltro,
     limpiarFiltros,
     recargar,
+    crear,
     eliminar,
   }
 }

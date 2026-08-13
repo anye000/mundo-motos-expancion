@@ -8,6 +8,8 @@
 
 export type EstadoExpansion = 'proximo' | 'en_ejecucion' | 'completado';
 
+export type TipoExpansion = 'apertura' | 'ampliacion' | 'relocalizacion' | 'otro';
+
 /** Fila completa de la tabla `expansiones` devuelta por Supabase. */
 export interface Expansion {
   id: string;
@@ -15,6 +17,9 @@ export interface Expansion {
   locacion: string;
   fecha_apertura: string;
   estado: EstadoExpansion;
+  tipo: string;
+  ciudad: string;
+  departamento: string;
   avance: number;
   latitud: number | null;
   longitud: number | null;
@@ -27,9 +32,12 @@ export interface Expansion {
 /** Campos requeridos para crear una expansión. */
 export interface CreateExpansionInput {
   concesionario: string;
-  locacion: string;
+  locacion?: string;
   fecha_apertura: string;
   estado?: EstadoExpansion;
+  tipo?: string;
+  ciudad?: string;
+  departamento?: string;
   avance?: number;
   latitud?: number | null;
   longitud?: number | null;
@@ -42,6 +50,9 @@ export interface UpdateExpansionInput {
   locacion?: string;
   fecha_apertura?: string;
   estado?: EstadoExpansion;
+  tipo?: string;
+  ciudad?: string;
+  departamento?: string;
   avance?: number;
   latitud?: number | null;
   longitud?: number | null;

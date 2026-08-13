@@ -63,6 +63,35 @@ function validateCoordenada(value: unknown, campo: string, min: number, max: num
 }
 
 /**
+ * Resuelve la ubicación de una expansión. Si llegan `ciudad`/`departamento`
+ * (formulario nuevo), los valida y deriva `locacion = "Ciudad, Departamento"`
+ * (Enfoque A: `locacion` sigue siendo la columna que consume la UI). Si el
+ * cliente solo envía `locacion` (legacy), se conserva tal cual.
+ */
+function resolveUbicacion(input: {
+  ciudad?: string;
+  departamento?: string;
+  locacion?: string;
+}): { ciudad: string; departamento: string; locacion: string } {
+  if (input.ciudad !== undefined || input.departamento !== undefined) {
+    const ciudad = validateRequiredString(input.ciudad, 'ciudad');
+    const departamento = validateRequiredString(input.departamento, 'departamento');
+    return { ciudad, departamento, locacion: `${ciudad}, ${departamento}` };
+  }
+  const locacion = validateRequiredString(input.locacion, 'locacion');
+  return { ciudad: '', departamento: '', locacion };
+}
+
+/** Valida el tipo de apertura si viene; default 'apertura'. */
+function validateTipo(value: unknown): string {
+  if (value === undefined || value === null) return 'apertura';
+  if (typeof value !== 'string' || value.trim() === '') {
+    throw new ApiError('El campo "tipo" no puede estar vacío', 400);
+  }
+  return value.trim();
+}
+
+/**
  * Obtiene las expansiones con filtros opcionales por estado, locación y rango
  * de fechas de apertura, con paginación. Excluye registros con soft delete.
  */
@@ -132,10 +161,11 @@ export async function getExpansionById(id: string): Promise<Expansion> {
 /** Crea una expansión validando los campos requeridos. */
 export async function createExpansion(input: CreateExpansionInput): Promise<Expansion> {
   const concesionario = validateRequiredString(input.concesionario, 'concesionario');
-  const locacion = validateRequiredString(input.locacion, 'locacion');
+  const { ciudad, departamento, locacion } = resolveUbicacion(input);
   const fechaApertura = validateFecha(input.fecha_apertura, 'fecha_apertura');
   const estado: EstadoExpansion =
     input.estado && isEstadoExpansion(input.estado) ? input.estado : 'proximo';
+  const tipo = validateTipo(input.tipo);
   const avance = input.avance !== undefined ? validateAvance(input.avance) : 0;
 
   const now = new Date().toISOString();
@@ -147,6 +177,9 @@ export async function createExpansion(input: CreateExpansionInput): Promise<Expa
       locacion,
       fecha_apertura: fechaApertura,
       estado,
+      tipo,
+      ciudad,
+      departamento,
       avance,
       latitud:
         input.latitud !== undefined ? validateCoordenada(input.latitud, 'latitud', -90, 90) : null,
@@ -182,7 +215,12 @@ export async function updateExpansion(id: string, input: UpdateExpansionInput): 
   if (input.concesionario !== undefined) {
     updates.concesionario = validateRequiredString(input.concesionario, 'concesionario');
   }
-  if (input.locacion !== undefined) {
+  if (input.ciudad !== undefined || input.departamento !== undefined) {
+    const ubicacion = resolveUbicacion(input);
+    updates.locacion = ubicacion.locacion;
+    updates.ciudad = ubicacion.ciudad;
+    updates.departamento = ubicacion.departamento;
+  } else if (input.locacion !== undefined) {
     updates.locacion = validateRequiredString(input.locacion, 'locacion');
   }
   if (input.fecha_apertura !== undefined) {
@@ -193,6 +231,9 @@ export async function updateExpansion(id: string, input: UpdateExpansionInput): 
       throw new ApiError(`Estado inválido. Valores válidos: ${ESTADOS_VALIDOS.join(', ')}`, 400);
     }
     updates.estado = input.estado;
+  }
+  if (input.tipo !== undefined) {
+    updates.tipo = validateTipo(input.tipo);
   }
   if (input.avance !== undefined) {
     updates.avance = validateAvance(input.avance);

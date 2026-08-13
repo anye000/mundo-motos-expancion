@@ -2,12 +2,17 @@
 
 export type EstadoExpansion = 'proximo' | 'en_ejecucion' | 'completado';
 
+export type TipoExpansion = 'apertura' | 'ampliacion' | 'relocalizacion' | 'otro';
+
 export interface Expansion {
   id: string;
   concesionario: string;
   locacion: string;
   fecha_apertura: string;
   estado: EstadoExpansion;
+  tipo: string;
+  ciudad: string;
+  departamento: string;
   avance: number;
   latitud: number | null;
   longitud: number | null;
@@ -19,9 +24,12 @@ export interface Expansion {
 
 export interface CreateExpansionInput {
   concesionario: string;
-  locacion: string;
+  locacion?: string;
   fecha_apertura: string;
   estado?: EstadoExpansion;
+  tipo?: string;
+  ciudad?: string;
+  departamento?: string;
   avance?: number;
   latitud?: number | null;
   longitud?: number | null;
@@ -33,6 +41,9 @@ export interface UpdateExpansionInput {
   locacion?: string;
   fecha_apertura?: string;
   estado?: EstadoExpansion;
+  tipo?: string;
+  ciudad?: string;
+  departamento?: string;
   avance?: number;
   latitud?: number | null;
   longitud?: number | null;
