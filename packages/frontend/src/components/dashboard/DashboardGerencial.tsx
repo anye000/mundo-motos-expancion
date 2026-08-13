@@ -1,6 +1,6 @@
-import { useMemo, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { differenceInCalendarDays, format, parseISO, startOfDay } from 'date-fns'
+import { format, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale'
 import {
   ArrowRight,
@@ -18,18 +18,12 @@ import {
 } from 'lucide-react'
 import { useConcesionarios } from '@hooks/useConcesionarios'
 import { useExpansiones } from '@hooks/useExpansiones'
-import { COLOR_ACTIVO, COLOR_INACTIVO, COLORES_CORPORATIVOS } from '@utils/branding'
-import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
-
-/** Texto de cuenta regresiva derivado de la fecha de apertura vs. hoy. */
-function cuentaRegresiva(fechaApertura: string): string {
-  const dias = differenceInCalendarDays(parseISO(fechaApertura), startOfDay(new Date()))
-  if (dias === 0) return 'Hoy'
-  if (dias === 1) return 'Mañana'
-  if (dias > 1) return `en ${dias} días`
-  const pasados = Math.abs(dias)
-  return pasados === 1 ? 'hace 1 día' : `hace ${pasados} días`
-}
+import { BigNumberCard } from './BigNumberCard'
+import { GraficoBarras } from './GraficoBarras'
+import { GraficoPie } from './GraficoPie'
+import { SelectorFechas } from './SelectorFechas'
+import { cuentaRegresiva } from './formateo'
+import { useFiltrosDashboard } from './useFiltrosDashboard'
 
 interface KpiCardProps {
   etiqueta: string
@@ -62,93 +56,9 @@ function KpiCard({ etiqueta, valor, detalle, icono: Icono, destacada = false }: 
   )
 }
 
-function es2026(fecha: string): boolean {
-  return parseISO(fecha).getFullYear() === 2026
-}
-
-interface DatosPie {
-  name: string
-  value: number
-  color: string
-}
-
-function GraficoPie({ datos }: { datos: DatosPie[] }) {
-  const total = datos.reduce((acumulado, d) => acumulado + d.value, 0)
-  const porcentaje = (valor: number): number => (total > 0 ? (valor / total) * 100 : 0)
-
-  if (total === 0) {
-    return (
-      <div className="flex items-center justify-center rounded-lg border border-dashed border-mm-gray-700 py-10 text-sm text-mm-gray-400">
-        Sin datos para mostrar.
-      </div>
-    )
-  }
-
-  return (
-    <div>
-      <ResponsiveContainer width="100%" height={230}>
-        <PieChart>
-          <Pie
-            data={datos}
-            dataKey="value"
-            nameKey="name"
-            cx="50%"
-            cy="50%"
-            innerRadius={48}
-            outerRadius={88}
-            paddingAngle={2}
-            stroke="#000000"
-            strokeWidth={2}
-          >
-            {datos.map((d) => (
-              <Cell key={d.name} fill={d.color} />
-            ))}
-          </Pie>
-          <Tooltip
-            contentStyle={{
-              backgroundColor: '#0A0A0A',
-              border: '1px solid #404040',
-              borderRadius: '0.5rem',
-              color: '#FFFFFF',
-            }}
-            itemStyle={{ color: '#FFFFFF' }}
-            formatter={(value: unknown, name: unknown) => [
-              `${String(value)} (${porcentaje(Number(value)).toFixed(1)}%)`,
-              String(name),
-            ]}
-          />
-        </PieChart>
-      </ResponsiveContainer>
-      <ul className="mt-3 flex flex-col gap-1.5">
-        {datos.map((d) => (
-          <li key={d.name} className="flex items-center justify-between gap-2 text-sm">
-            <span className="flex items-center gap-2 text-mm-gray-300">
-              <span
-                className="h-2.5 w-2.5 shrink-0 rounded-full"
-                style={{ backgroundColor: d.color }}
-              />
-              {d.name}
-            </span>
-            <span className="text-mm-gray-400">
-              {d.value} ·{' '}
-              <span className="font-semibold text-white">{porcentaje(d.value).toFixed(1)}%</span>
-            </span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  )
-}
-
-/**
- * Dashboard Gerencial: vista ejecutiva con KPIs de la red de concesionarios y
- * del plan de expansión 2026, más accesos directos a cada sección. Consume los
- * hooks existentes y navega con el router (react-router-dom).
- */
 export function DashboardGerencial() {
   const {
     concesionarios,
-    total,
     cargando: concesionariosCargando,
     error: concesionariosError,
     recargar: recargarConcesionarios,
@@ -160,64 +70,19 @@ export function DashboardGerencial() {
     recargar: recargarExpansiones,
   } = useExpansiones()
 
-  const kpis = useMemo(() => {
-    const hoy = startOfDay(new Date())
-
-    const activos = concesionarios.filter((c) => c.estado === 'activo').length
-    const inactivos = concesionarios.filter((c) => c.estado === 'inactivo').length
-    const proximas = expansiones.filter((e) => e.estado === 'proximo' && es2026(e.fecha_apertura)).length
-    const enEjecucion = expansiones.filter((e) => e.estado === 'en_ejecucion' && es2026(e.fecha_apertura)).length
-    const completadas = expansiones.filter((e) => e.estado === 'completado' && es2026(e.fecha_apertura)).length
-
-    const meta2026 = expansiones.filter((e) => es2026(e.fecha_apertura)).length
-    const completadas2026 = expansiones.filter((e) => e.estado === 'completado' && es2026(e.fecha_apertura)).length
-    const progresoMeta = meta2026 > 0 ? (completadas2026 / meta2026) * 100 : 0
-
-    const pendientes = expansiones
-      .filter(
-        (e) =>
-          (e.estado === 'proximo' || e.estado === 'en_ejecucion') &&
-          parseISO(e.fecha_apertura) >= hoy
-      )
-      .sort((a, b) => a.fecha_apertura.localeCompare(b.fecha_apertura))
-
-    return {
-      activos,
-      inactivos,
-      proximas,
-      enEjecucion,
-      completadas,
-      meta2026,
-      completadas2026,
-      progresoMeta,
-      departamentos: new Set(concesionarios.map((c) => c.departamento)).size,
-      porcentajeActivos: total > 0 ? Math.round((activos / total) * 100) : 0,
-      proximaApertura: pendientes[0] ?? null,
-      proximasAperturas: pendientes.slice(0, 3),
-    }
-  }, [concesionarios, expansiones, total])
-
-  const datosEstado = useMemo<DatosPie[]>(
-    () => [
-      { name: 'Activos', value: kpis.activos, color: COLOR_ACTIVO },
-      { name: 'Inactivos', value: kpis.inactivos, color: COLOR_INACTIVO },
-    ],
-    [kpis]
-  )
-
-  const datosAperturasMes = useMemo<DatosPie[]>(() => {
-    const porMes = new Array<number>(12).fill(0)
-    for (const e of expansiones) {
-      if (es2026(e.fecha_apertura)) {
-        porMes[parseISO(e.fecha_apertura).getMonth()] += 1
-      }
-    }
-    return porMes.map((value, indice) => ({
-      name: format(new Date(2026, indice, 1), 'MMM', { locale: es }),
-      value,
-      color: COLORES_CORPORATIVOS[indice % COLORES_CORPORATIVOS.length],
-    }))
-  }, [expansiones])
+  const {
+    filtros,
+    concesionariosFiltrados,
+    kpis,
+    datosPie,
+    datosBarras,
+    totalBarras,
+    hayFiltros,
+    cambiarRango,
+    seleccionarEstado,
+    seleccionarMes,
+    limpiarFiltros,
+  } = useFiltrosDashboard(concesionarios, expansiones)
 
   const cargando = concesionariosCargando || expansionesCargando
   const error = concesionariosError || expansionesError
@@ -233,7 +98,6 @@ export function DashboardGerencial() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Cabecera */}
       <section className="flex flex-col gap-1">
         <p className="text-xs font-bold uppercase tracking-[0.2em] text-mm-yellow">
           Mundo Motos · Panel Gerencial
@@ -242,7 +106,8 @@ export function DashboardGerencial() {
           Panel de Control <span className="text-mm-yellow">2026</span>
         </h2>
         <p className="text-sm text-mm-gray-400">
-          Estado de la red de concesionarios y del plan de expansión en un vistazo.
+          Estado de la red de concesionarios y del plan de expansión. Haz clic en los gráficos para
+          filtrar todo el panel.
         </p>
       </section>
 
@@ -262,11 +127,46 @@ export function DashboardGerencial() {
         </div>
       )}
 
+      <SelectorFechas
+        desde={filtros.desde}
+        hasta={filtros.hasta}
+        hayFiltros={hayFiltros}
+        onCambiarRango={cambiarRango}
+        onLimpiar={limpiarFiltros}
+      />
+
+      {/* Big Number Cards */}
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <BigNumberCard
+          etiqueta="Total red"
+          valor={concesionariosFiltrados.length}
+          detalle={`${kpis.departamentos} departamentos cubiertos`}
+          icono={Building2}
+        />
+        <BigNumberCard
+          etiqueta="Progreso de la meta"
+          valor={`${kpis.progresoMeta.toFixed(1)}%`}
+          detalle={`${kpis.completadas2026} de ${kpis.meta2026} aperturas completadas`}
+          icono={Target}
+          destacado
+        />
+        <BigNumberCard
+          etiqueta="Próximas aperturas"
+          valor={kpis.proximasAperturas.length}
+          detalle={
+            kpis.proximaApertura
+              ? `Siguiente: ${kpis.proximaApertura.locacion.split(',')[0]}`
+              : 'Sin aperturas pendientes'
+          }
+          icono={Rocket}
+        />
+      </section>
+
       {/* KPIs ejecutivos */}
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
           etiqueta="Total concesionarios"
-          valor={total}
+          valor={kpis.total}
           detalle={`${kpis.departamentos} departamentos cubiertos`}
           icono={Building2}
         />
@@ -281,51 +181,52 @@ export function DashboardGerencial() {
 
         <KpiCard etiqueta="En ejecución 2026" valor={kpis.enEjecucion} icono={TrendingUp} />
         <KpiCard etiqueta="Completadas 2026" valor={kpis.completadas} icono={Flag} />
-
-        {/* Próxima apertura (tarjeta destacada a lo ancho) */}
-        <div className="flex flex-col gap-4 rounded-xl border border-mm-yellow/70 bg-black p-5 sm:flex-row sm:items-center sm:justify-between lg:col-span-4">
-          <div className="flex items-center gap-4">
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-mm-yellow text-mm-black">
-              <CalendarClock className="h-6 w-6" />
-            </span>
-            <div className="min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-wider text-mm-gray-400">
-                Próxima apertura
-              </p>
-              {kpis.proximaApertura ? (
-                <>
-                  <p className="truncate text-xl font-bold text-white">
-                    {kpis.proximaApertura.concesionario}
-                  </p>
-                  <p className="text-sm text-mm-gray-400">
-                    {format(parseISO(kpis.proximaApertura.fecha_apertura), 'EEEE d MMMM yyyy', {
-                      locale: es,
-                    })}{' '}
-                    · <span className="font-semibold text-mm-yellow">{cuentaRegresiva(kpis.proximaApertura.fecha_apertura)}</span>
-                  </p>
-                </>
-              ) : (
-                <p className="text-sm text-mm-gray-400">Sin aperturas programadas.</p>
-              )}
-            </div>
-          </div>
-          {kpis.proximaApertura && kpis.proximaApertura.estado === 'en_ejecucion' && (
-            <div className="flex items-center gap-3">
-              <div className="h-1.5 w-full max-w-[160px] overflow-hidden rounded-full bg-mm-gray-800 sm:w-40">
-                <div
-                  className="h-full rounded-full bg-mm-yellow"
-                  style={{ width: `${kpis.proximaApertura.avance}%` }}
-                />
-              </div>
-              <span className="text-xs font-semibold text-mm-gray-300">
-                {kpis.proximaApertura.avance}%
-              </span>
-            </div>
-          )}
-        </div>
       </section>
 
-      {/* Meta de expansión 2026 */}
+      <div className="flex flex-col gap-4 rounded-xl border border-mm-yellow/70 bg-black p-5 sm:flex-row sm:items-center sm:justify-between lg:col-span-4">
+        <div className="flex items-center gap-4">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-mm-yellow text-mm-black">
+            <CalendarClock className="h-6 w-6" />
+          </span>
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-wider text-mm-gray-400">
+              Próxima apertura
+            </p>
+            {kpis.proximaApertura ? (
+              <>
+                <p className="truncate text-xl font-bold text-white">
+                  {kpis.proximaApertura.concesionario}
+                </p>
+                <p className="text-sm text-mm-gray-400">
+                  {format(parseISO(kpis.proximaApertura.fecha_apertura), 'EEEE d MMMM yyyy', {
+                    locale: es,
+                  })}{' '}
+                  ·{' '}
+                  <span className="font-semibold text-mm-yellow">
+                    {cuentaRegresiva(kpis.proximaApertura.fecha_apertura)}
+                  </span>
+                </p>
+              </>
+            ) : (
+              <p className="text-sm text-mm-gray-400">Sin aperturas programadas.</p>
+            )}
+          </div>
+        </div>
+        {kpis.proximaApertura && kpis.proximaApertura.estado === 'en_ejecucion' && (
+          <div className="flex items-center gap-3">
+            <div className="h-1.5 w-full max-w-[160px] overflow-hidden rounded-full bg-mm-gray-800 sm:w-40">
+              <div
+                className="h-full rounded-full bg-mm-yellow"
+                style={{ width: `${kpis.proximaApertura.avance}%` }}
+              />
+            </div>
+            <span className="text-xs font-semibold text-mm-gray-300">
+              {kpis.proximaApertura.avance}%
+            </span>
+          </div>
+        )}
+      </div>
+
       <section className="rounded-xl border border-mm-yellow/70 bg-black p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-4">
@@ -352,30 +253,33 @@ export function DashboardGerencial() {
           />
         </div>
         <p className="mt-2 text-xs text-mm-gray-400">
-          Progreso calculado de forma dinámica en función de las aperturas programadas y
-          completadas para el año 2026.
+          Progreso calculado de forma dinámica en función de las aperturas programadas y completadas
+          para el año 2026.
         </p>
       </section>
 
-      {/* Gráficos analíticos */}
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <div className="rounded-xl border border-mm-gray-700 bg-black p-5">
+        <div className="rounded-2xl border border-mm-yellow/60 bg-black p-5 shadow-[0_0_28px_rgba(255,204,0,0.14)]">
           <h3 className="mb-1 text-sm font-bold text-white">Estado operativo de la red</h3>
           <p className="mb-4 text-xs text-mm-gray-400">
-            Distribución de concesionarios por estado operativo.
+            Distribución de concesionarios por estado operativo. Haz clic para filtrar.
           </p>
-          <GraficoPie datos={datosEstado} />
+          <GraficoPie datos={datosPie} activo={filtros.estado} onSeleccionar={seleccionarEstado} />
         </div>
-        <div className="rounded-xl border border-mm-gray-700 bg-black p-5">
-          <h3 className="mb-1 text-sm font-bold text-white">Aperturas 2026 por mes</h3>
+        <div className="rounded-2xl border border-mm-yellow/60 bg-black p-5 shadow-[0_0_28px_rgba(255,204,0,0.14)]">
+          <h3 className="mb-1 text-sm font-bold text-white">Aperturas por periodo</h3>
           <p className="mb-4 text-xs text-mm-gray-400">
-            Distribución mensual de las aperturas programadas en el plan de expansión.
+            Distribución de las aperturas en el rango seleccionado. Haz clic para filtrar.
           </p>
-          <GraficoPie datos={datosAperturasMes} />
+          <GraficoBarras
+            datos={datosBarras}
+            activo={filtros.mes}
+            total={totalBarras}
+            onSeleccionar={seleccionarMes}
+          />
         </div>
       </section>
 
-      {/* Accesos directos */}
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Link
           to="/expansiones"
@@ -407,7 +311,9 @@ export function DashboardGerencial() {
                     </span>
                     <span className="shrink-0 text-xs text-mm-gray-400">
                       {format(parseISO(expansion.fecha_apertura), 'd MMM', { locale: es })} ·{' '}
-                      <span className="text-mm-yellow">{cuentaRegresiva(expansion.fecha_apertura)}</span>
+                      <span className="text-mm-yellow">
+                        {cuentaRegresiva(expansion.fecha_apertura)}
+                      </span>
                     </span>
                   </li>
                 ))}
@@ -426,15 +332,13 @@ export function DashboardGerencial() {
           to="/concesionarios"
           className="group flex flex-col gap-4 rounded-xl border border-mm-gray-700 bg-black p-6 transition-colors hover:border-mm-yellow/60"
         >
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-mm-gray-800 text-mm-yellow">
-                <MapPin className="h-6 w-6" />
-              </span>
-              <div>
-                <p className="font-bold text-white">Gestión de Concesionarios</p>
-                <p className="text-xs text-mm-gray-400">Mapa, filtros y mantenimiento</p>
-              </div>
+          <div className="flex items-center gap-3">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-mm-gray-800 text-mm-yellow">
+              <MapPin className="h-6 w-6" />
+            </span>
+            <div>
+              <p className="font-bold text-white">Gestión de Concesionarios</p>
+              <p className="text-xs text-mm-gray-400">Mapa, filtros y mantenimiento</p>
             </div>
             <ArrowRight className="h-5 w-5 shrink-0 text-mm-yellow transition-transform group-hover:translate-x-1" />
           </div>
@@ -445,7 +349,7 @@ export function DashboardGerencial() {
             </p>
             <div className="mb-2 flex items-center justify-between text-sm">
               <span className="text-mm-gray-200">
-                {kpis.activos} de {total} activos
+                {kpis.activos} de {concesionariosFiltrados.length} activos
               </span>
               <span className="font-semibold text-mm-yellow">{kpis.porcentajeActivos}%</span>
             </div>

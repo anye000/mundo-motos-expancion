@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { Bike, BarChart3, CalendarDays, LayoutDashboard, MapPin, type LucideIcon } from 'lucide-react'
-import DashboardGerencial from '@components/DashboardGerencial'
+import DashboardGerencial from '@components/dashboard/DashboardGerencial'
 import DashboardConcesionarios from '@components/DashboardConcesionarios'
 import CronogramaExpansions from '@components/CronogramaExpansions'
 import ReportesView from '@components/ReportesView'
