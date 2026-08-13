@@ -22,44 +22,31 @@ export default defineConfig({
         start_url: '/',
         icons: [
           {
-            src: 'pwa-192x192.png',
+            src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYPhfDwAACoPj MizAZTwAAAABJRU5ErJggg==',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any',
           },
           {
-            src: 'pwa-512x512.png',
+            src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYPhfDwAACoPj MizAZTwAAAABJRU5ErJggg==',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any',
           },
           {
-            src: 'pwa-maskable-192x192.png',
+            src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYPhfDwAACoPj MizAZTwAAAABJRU5ErJggg==',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'maskable',
           },
           {
-            src: 'pwa-maskable-512x512.png',
+            src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYPhfDwAACoPj MizAZTwAAAABJRU5ErJggg==',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable',
           },
         ],
-        screenshots: [
-          {
-            src: 'screenshot-narrow.png',
-            sizes: '540x720',
-            type: 'image/png',
-            form_factor: 'narrow',
-          },
-          {
-            src: 'screenshot-wide.png',
-            sizes: '1280x720',
-            type: 'image/png',
-            form_factor: 'wide',
-          },
-        ],
+        screenshots: [],
         categories: ['business', 'productivity'],
       },
       workbox: {
@@ -133,9 +120,6 @@ export default defineConfig({
           if (id.includes('node_modules')) {
             if (id.includes('leaflet')) {
               return 'leaflet'
-            }
-            if (id.includes('react') || id.includes('react-dom') || id.includes('scheduler')) {
-              return 'react'
             }
             return 'vendor'
           }
