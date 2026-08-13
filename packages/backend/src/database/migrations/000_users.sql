@@ -26,6 +26,6 @@ CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_rol ON users(rol);
 CREATE INDEX idx_users_estado ON users(estado);
 
--- RLS desactivado mientras el backend es el único cliente (sin auth).
--- Al implementar autenticación, habilitar y crear políticas por rol.
-ALTER TABLE users DISABLE ROW LEVEL SECURITY;
+-- RLS habilitado. Las políticas de acceso (anon/authenticated full access)
+-- se definen en la migración 004_rls_politicas_seguridad.sql.
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;

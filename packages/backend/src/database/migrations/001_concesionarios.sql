@@ -33,6 +33,6 @@ CREATE INDEX idx_concesionarios_geom ON concesionarios USING GIST(
   ll_to_earth(latitud, longitud)
 );
 
--- RLS desactivado mientras el backend es el único cliente (sin auth).
--- Al implementar autenticación, habilitar y crear políticas por rol.
-ALTER TABLE concesionarios DISABLE ROW LEVEL SECURITY;
+-- RLS habilitado. Las políticas de acceso (anon/authenticated full access)
+-- se definen en la migración 004_rls_politicas_seguridad.sql.
+ALTER TABLE concesionarios ENABLE ROW LEVEL SECURITY;

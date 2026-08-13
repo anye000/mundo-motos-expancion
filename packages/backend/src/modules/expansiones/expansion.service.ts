@@ -73,7 +73,7 @@ export async function getExpansiones(filters: ExpansionFilters = {}): Promise<Pa
   const start = (page - 1) * limit;
   const end = start + limit - 1;
 
-  let query = supabase.from(TABLE).select('*', { count: 'exact' }).eq('deleted_at', null);
+  let query = supabase.from(TABLE).select('*', { count: 'exact' }).is('deleted_at', null);
 
   if (filters.estado) {
     query = query.eq('estado', filters.estado);
@@ -115,7 +115,7 @@ export async function getExpansionById(id: string): Promise<Expansion> {
     .from(TABLE)
     .select('*')
     .eq('id', id)
-    .eq('deleted_at', null)
+    .is('deleted_at', null)
     .maybeSingle()
     .returns<Expansion | null>();
 
@@ -212,7 +212,7 @@ export async function updateExpansion(id: string, input: UpdateExpansionInput): 
     .from(TABLE)
     .update(updates)
     .eq('id', id)
-    .eq('deleted_at', null)
+    .is('deleted_at', null)
     .select()
     .maybeSingle()
     .returns<Expansion | null>();
@@ -239,7 +239,7 @@ export async function deleteExpansion(id: string): Promise<void> {
     .from(TABLE)
     .update({ deleted_at: now, updated_at: now })
     .eq('id', id)
-    .eq('deleted_at', null)
+    .is('deleted_at', null)
     .select('id')
     .maybeSingle();
 

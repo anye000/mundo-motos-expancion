@@ -19,6 +19,6 @@ CREATE INDEX idx_interacciones_crm_tipo ON interacciones_crm(tipo);
 CREATE INDEX idx_interacciones_crm_usuario_responsable ON interacciones_crm(usuario_responsable);
 CREATE INDEX idx_interacciones_crm_created_at ON interacciones_crm(created_at);
 
--- RLS desactivado mientras el backend es el único cliente (sin auth).
--- Al implementar autenticación, habilitar y crear políticas por rol.
-ALTER TABLE interacciones_crm DISABLE ROW LEVEL SECURITY;
+-- RLS habilitado. Las políticas de acceso (anon/authenticated full access)
+-- se definen en la migración 004_rls_politicas_seguridad.sql.
+ALTER TABLE interacciones_crm ENABLE ROW LEVEL SECURITY;

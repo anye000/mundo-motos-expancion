@@ -36,5 +36,6 @@ INSERT INTO expansiones (concesionario, locacion, fecha_apertura, estado, avance
   ('Mundo Motos Maracaibo', 'Maracaibo, Zulia', '2026-09-30', 'proximo', 0, 10.6544, -71.6489, 'Evaluación inicial de la plaza.'),
   ('Mundo Motos Valencia', 'Valencia, Carabobo', '2026-06-20', 'completado', 100, 10.1667, -68.0000, 'Apertura inaugurada.');
 
--- RLS (opcional): habilitar para restringir acceso por fila.
--- ALTER TABLE expansiones ENABLE ROW LEVEL SECURITY;
+-- RLS habilitado. Las políticas de acceso (anon/authenticated full access)
+-- se definen en la migración 004_rls_politicas_seguridad.sql.
+ALTER TABLE expansiones ENABLE ROW LEVEL SECURITY;
