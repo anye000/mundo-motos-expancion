@@ -11,13 +11,15 @@ import {
   Loader2,
   MapPin,
   Rocket,
+  Target,
   TrendingUp,
   XCircle,
   type LucideIcon,
 } from 'lucide-react'
 import { useConcesionarios } from '@hooks/useConcesionarios'
 import { useExpansiones } from '@hooks/useExpansiones'
-import { Expansion } from '../types/expansion'
+import { COLOR_ACTIVO, COLOR_INACTIVO, COLORES_CORPORATIVOS } from '@utils/branding'
+import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 
 /** Texto de cuenta regresiva derivado de la fecha de apertura vs. hoy. */
 function cuentaRegresiva(fechaApertura: string): string {
@@ -60,6 +62,84 @@ function KpiCard({ etiqueta, valor, detalle, icono: Icono, destacada = false }: 
   )
 }
 
+function es2026(fecha: string): boolean {
+  return parseISO(fecha).getFullYear() === 2026
+}
+
+interface DatosPie {
+  name: string
+  value: number
+  color: string
+}
+
+function GraficoPie({ datos }: { datos: DatosPie[] }) {
+  const total = datos.reduce((acumulado, d) => acumulado + d.value, 0)
+  const porcentaje = (valor: number): number => (total > 0 ? (valor / total) * 100 : 0)
+
+  if (total === 0) {
+    return (
+      <div className="flex items-center justify-center rounded-lg border border-dashed border-mm-gray-700 py-10 text-sm text-mm-gray-400">
+        Sin datos para mostrar.
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      <ResponsiveContainer width="100%" height={230}>
+        <PieChart>
+          <Pie
+            data={datos}
+            dataKey="value"
+            nameKey="name"
+            cx="50%"
+            cy="50%"
+            innerRadius={48}
+            outerRadius={88}
+            paddingAngle={2}
+            stroke="#000000"
+            strokeWidth={2}
+          >
+            {datos.map((d) => (
+              <Cell key={d.name} fill={d.color} />
+            ))}
+          </Pie>
+          <Tooltip
+            contentStyle={{
+              backgroundColor: '#0A0A0A',
+              border: '1px solid #404040',
+              borderRadius: '0.5rem',
+              color: '#FFFFFF',
+            }}
+            itemStyle={{ color: '#FFFFFF' }}
+            formatter={(value: unknown, name: unknown) => [
+              `${String(value)} (${porcentaje(Number(value)).toFixed(1)}%)`,
+              String(name),
+            ]}
+          />
+        </PieChart>
+      </ResponsiveContainer>
+      <ul className="mt-3 flex flex-col gap-1.5">
+        {datos.map((d) => (
+          <li key={d.name} className="flex items-center justify-between gap-2 text-sm">
+            <span className="flex items-center gap-2 text-mm-gray-300">
+              <span
+                className="h-2.5 w-2.5 shrink-0 rounded-full"
+                style={{ backgroundColor: d.color }}
+              />
+              {d.name}
+            </span>
+            <span className="text-mm-gray-400">
+              {d.value} ·{' '}
+              <span className="font-semibold text-white">{porcentaje(d.value).toFixed(1)}%</span>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
 /**
  * Dashboard Gerencial: vista ejecutiva con KPIs de la red de concesionarios y
  * del plan de expansión 2026, más accesos directos a cada sección. Consume los
@@ -82,13 +162,16 @@ export function DashboardGerencial() {
 
   const kpis = useMemo(() => {
     const hoy = startOfDay(new Date())
-    const en2026 = (e: Expansion) => parseISO(e.fecha_apertura).getFullYear() === 2026
 
     const activos = concesionarios.filter((c) => c.estado === 'activo').length
     const inactivos = concesionarios.filter((c) => c.estado === 'inactivo').length
-    const proximas = expansiones.filter((e) => e.estado === 'proximo' && en2026(e)).length
-    const enEjecucion = expansiones.filter((e) => e.estado === 'en_ejecucion' && en2026(e)).length
-    const completadas = expansiones.filter((e) => e.estado === 'completado' && en2026(e)).length
+    const proximas = expansiones.filter((e) => e.estado === 'proximo' && es2026(e.fecha_apertura)).length
+    const enEjecucion = expansiones.filter((e) => e.estado === 'en_ejecucion' && es2026(e.fecha_apertura)).length
+    const completadas = expansiones.filter((e) => e.estado === 'completado' && es2026(e.fecha_apertura)).length
+
+    const meta2026 = expansiones.filter((e) => es2026(e.fecha_apertura)).length
+    const completadas2026 = expansiones.filter((e) => e.estado === 'completado' && es2026(e.fecha_apertura)).length
+    const progresoMeta = meta2026 > 0 ? (completadas2026 / meta2026) * 100 : 0
 
     const pendientes = expansiones
       .filter(
@@ -104,12 +187,37 @@ export function DashboardGerencial() {
       proximas,
       enEjecucion,
       completadas,
+      meta2026,
+      completadas2026,
+      progresoMeta,
       departamentos: new Set(concesionarios.map((c) => c.departamento)).size,
       porcentajeActivos: total > 0 ? Math.round((activos / total) * 100) : 0,
       proximaApertura: pendientes[0] ?? null,
       proximasAperturas: pendientes.slice(0, 3),
     }
   }, [concesionarios, expansiones, total])
+
+  const datosEstado = useMemo<DatosPie[]>(
+    () => [
+      { name: 'Activos', value: kpis.activos, color: COLOR_ACTIVO },
+      { name: 'Inactivos', value: kpis.inactivos, color: COLOR_INACTIVO },
+    ],
+    [kpis]
+  )
+
+  const datosAperturasMes = useMemo<DatosPie[]>(() => {
+    const porMes = new Array<number>(12).fill(0)
+    for (const e of expansiones) {
+      if (es2026(e.fecha_apertura)) {
+        porMes[parseISO(e.fecha_apertura).getMonth()] += 1
+      }
+    }
+    return porMes.map((value, indice) => ({
+      name: format(new Date(2026, indice, 1), 'MMM', { locale: es }),
+      value,
+      color: COLORES_CORPORATIVOS[indice % COLORES_CORPORATIVOS.length],
+    }))
+  }, [expansiones])
 
   const cargando = concesionariosCargando || expansionesCargando
   const error = concesionariosError || expansionesError
@@ -214,6 +322,56 @@ export function DashboardGerencial() {
               </span>
             </div>
           )}
+        </div>
+      </section>
+
+      {/* Meta de expansión 2026 */}
+      <section className="rounded-xl border border-mm-yellow/70 bg-black p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-4">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-mm-yellow text-mm-black">
+              <Target className="h-6 w-6" />
+            </span>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-mm-gray-400">
+                Meta de expansión 2026
+              </p>
+              <p className="text-2xl font-bold text-white">
+                {kpis.completadas2026} <span className="text-mm-gray-400">de</span>{' '}
+                {kpis.meta2026}{' '}
+                <span className="text-base font-medium text-mm-gray-400">aperturas completadas</span>
+              </p>
+            </div>
+          </div>
+          <p className="text-4xl font-bold text-mm-yellow">{kpis.progresoMeta.toFixed(1)}%</p>
+        </div>
+        <div className="mt-4 h-3 w-full overflow-hidden rounded-full bg-mm-gray-800">
+          <div
+            className="h-full rounded-full bg-mm-yellow transition-all duration-500"
+            style={{ width: `${Math.min(100, kpis.progresoMeta)}%` }}
+          />
+        </div>
+        <p className="mt-2 text-xs text-mm-gray-400">
+          Progreso calculado de forma dinámica en función de las aperturas programadas y
+          completadas para el año 2026.
+        </p>
+      </section>
+
+      {/* Gráficos analíticos */}
+      <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="rounded-xl border border-mm-gray-700 bg-black p-5">
+          <h3 className="mb-1 text-sm font-bold text-white">Estado operativo de la red</h3>
+          <p className="mb-4 text-xs text-mm-gray-400">
+            Distribución de concesionarios por estado operativo.
+          </p>
+          <GraficoPie datos={datosEstado} />
+        </div>
+        <div className="rounded-xl border border-mm-gray-700 bg-black p-5">
+          <h3 className="mb-1 text-sm font-bold text-white">Aperturas 2026 por mes</h3>
+          <p className="mb-4 text-xs text-mm-gray-400">
+            Distribución mensual de las aperturas programadas en el plan de expansión.
+          </p>
+          <GraficoPie datos={datosAperturasMes} />
         </div>
       </section>
 
