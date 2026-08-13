@@ -1,9 +1,20 @@
 import { useEffect } from 'react'
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet'
+import { LocateFixed } from 'lucide-react'
 import L from 'leaflet'
+import { BuscadorDireccion } from '@components/BuscadorDireccion'
+import { ResultadoGeocodificacion } from '@utils/geocodificacion'
 import { Concesionario, Coordenadas, EstadoOperativo } from '../types/concesionario'
 
 const CENTRO_COLOMBIA: [number, number] = [4.60971, -74.08175]
+
+const ESTADO_LABEL: Record<EstadoOperativo, string> = {
+  activo: 'Activo',
+  inactivo: 'Inactivo',
+  proximo: 'Próximo',
+  en_ejecucion: 'En ejecución',
+  completado: 'Completado',
+}
 
 const COLORES_PIN: Record<
   EstadoOperativo,
@@ -79,10 +90,100 @@ function ClicUbicacion({ onClic }: { onClic: (lat: number, lng: number) => void 
   return null
 }
 
+/** Ajusta la vista del mapa a los concesionarios o vuela al seleccionado. */
+function BotonCentrarMapa({ concesionarios }: { concesionarios: Concesionario[] }) {
+  const map = useMap()
+
+  function centrar() {
+    if (concesionarios.length === 0) {
+      map.setView(CENTRO_COLOMBIA, 5)
+      return
+    }
+    const bounds = L.latLngBounds(
+      concesionarios.map((c) => [c.latitud, c.longitud] as [number, number])
+    )
+    map.flyToBounds(bounds, { padding: [48, 48], duration: 0.6 })
+  }
+
+  return (
+    <div className="absolute left-2 top-12 z-[1000]">
+      <button
+        type="button"
+        onClick={centrar}
+        className="flex h-9 w-9 items-center justify-center rounded-md border border-mm-gray-600 bg-mm-gray-900 text-mm-gray-300 shadow-md transition-colors hover:text-mm-yellow"
+        title="Centrar mapa"
+        aria-label="Centrar mapa"
+      >
+        <LocateFixed className="h-4 w-4" />
+      </button>
+    </div>
+  )
+}
+
+/** Botón de acción dentro de los popups de concesionarios. */
+function BotonPopup({
+  onClick,
+  variante,
+  children,
+}: {
+  onClick: () => void
+  variante: 'primario' | 'secundario'
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`popup-boton popup-boton-${variante}`}
+    >
+      {children}
+    </button>
+  )
+}
+
+/** Acciones de popup: cierra el popup actual y delega en el padre. */
+function AccionesPopup({
+  concesionario,
+  onEditar,
+  onGestionar,
+}: {
+  concesionario: Concesionario
+  onEditar?: (concesionario: Concesionario) => void
+  onGestionar?: (concesionario: Concesionario) => void
+}) {
+  const map = useMap()
+
+  return (
+    <div className="popup-concesionario-acciones">
+      <BotonPopup
+        variante="primario"
+        onClick={() => {
+          map.closePopup()
+          onEditar?.(concesionario)
+        }}
+      >
+        Editar
+      </BotonPopup>
+      <BotonPopup
+        variante="secundario"
+        onClick={() => {
+          map.closePopup()
+          onGestionar?.(concesionario)
+        }}
+      >
+        Gestionar
+      </BotonPopup>
+    </div>
+  )
+}
+
 export interface MapaConcesionariosProps {
   concesionarios: Concesionario[]
   seleccionado?: Concesionario | null
   onSeleccionar?: (concesionario: Concesionario) => void
+  onEditar?: (concesionario: Concesionario) => void
+  onGestionar?: (concesionario: Concesionario) => void
+  onBuscarDireccion?: (resultado: ResultadoGeocodificacion) => void
   modoSeleccionUbicacion?: boolean
   ubicacionSeleccionada?: Coordenadas | null
   onClicUbicacion?: (lat: number, lng: number) => void
@@ -92,72 +193,77 @@ export function MapaConcesionarios({
   concesionarios,
   seleccionado = null,
   onSeleccionar,
+  onEditar,
+  onGestionar,
+  onBuscarDireccion,
   modoSeleccionUbicacion = false,
   ubicacionSeleccionada = null,
   onClicUbicacion,
 }: MapaConcesionariosProps) {
   return (
-    <MapContainer center={CENTRO_COLOMBIA} zoom={5} scrollWheelZoom={false} className="h-full w-full">
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
-      {modoSeleccionUbicacion ? (
-        <>
-          <ClicUbicacion onClic={onClicUbicacion ?? (() => undefined)} />
-          {ubicacionSeleccionada && (
-            <Marker
-              position={[ubicacionSeleccionada.lat, ubicacionSeleccionada.lng]}
-              icon={iconoConcesionario('activo')}
-            >
-              <Popup>Ubicación seleccionada</Popup>
-            </Marker>
-          )}
-        </>
-      ) : (
-        <>
-          {concesionarios.map((concesionario) => (
-            <Marker
-              key={concesionario.id}
-              position={[concesionario.latitud, concesionario.longitud]}
-              icon={iconoConcesionario(concesionario.estado)}
-              eventHandlers={{
-                click: () => onSeleccionar?.(concesionario),
-              }}
-            >
-              <Popup>
-                <div>
-                  <div className="popup-concesionario-badges">
-                    <span className={`badge-estado ${concesionario.estado}`}>
-                      {concesionario.estado === 'activo'
-                        ? 'Activo'
-                        : concesionario.estado === 'inactivo'
-                          ? 'Inactivo'
-                          : concesionario.estado === 'proximo'
-                            ? 'Próximo'
-                            : concesionario.estado === 'en_ejecucion'
-                              ? 'En ejecución'
-                              : 'Completado'}
-                    </span>
+    <div className="relative z-0 h-full w-full">
+      <MapContainer center={CENTRO_COLOMBIA} zoom={5} scrollWheelZoom={false} className="h-full w-full">
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+        {modoSeleccionUbicacion ? (
+          <>
+            <ClicUbicacion onClic={onClicUbicacion ?? (() => undefined)} />
+            {ubicacionSeleccionada && (
+              <Marker
+                position={[ubicacionSeleccionada.lat, ubicacionSeleccionada.lng]}
+                icon={iconoConcesionario('activo')}
+              >
+                <Popup>Ubicación seleccionada</Popup>
+              </Marker>
+            )}
+            <BuscadorDireccion onSeleccionar={onBuscarDireccion ?? (() => undefined)} />
+          </>
+        ) : (
+          <>
+            {concesionarios.map((concesionario) => (
+              <Marker
+                key={concesionario.id}
+                position={[concesionario.latitud, concesionario.longitud]}
+                icon={iconoConcesionario(concesionario.estado)}
+                eventHandlers={{
+                  click: () => onSeleccionar?.(concesionario),
+                }}
+              >
+                <Popup>
+                  <div className="popup-concesionario">
+                    <div className="popup-concesionario-badges">
+                      <span className={`badge-estado ${concesionario.estado}`}>
+                        {ESTADO_LABEL[concesionario.estado]}
+                      </span>
+                    </div>
+                    <h3 className="popup-concesionario-titulo">{concesionario.nombre}</h3>
+                    <p className="popup-concesionario-texto">Código: {concesionario.nit}</p>
+                    <p className="popup-concesionario-texto">
+                      {concesionario.ciudad} · {concesionario.departamento}
+                    </p>
+                    <p className="popup-concesionario-texto">{concesionario.direccion}</p>
+                    {concesionario.telefono && (
+                      <p className="popup-concesionario-texto">{concesionario.telefono}</p>
+                    )}
+                    <p className="popup-concesionario-texto">{concesionario.email}</p>
+                    <AccionesPopup
+                      concesionario={concesionario}
+                      onEditar={onEditar}
+                      onGestionar={onGestionar}
+                    />
                   </div>
-                  <h3 className="popup-concesionario-titulo">{concesionario.nombre}</h3>
-                  <p className="popup-concesionario-texto">Código: {concesionario.nit}</p>
-                  <p className="popup-concesionario-texto">
-                    {concesionario.ciudad} · {concesionario.departamento}
-                  </p>
-                  <p className="popup-concesionario-texto">{concesionario.direccion}</p>
-                  {concesionario.telefono && (
-                    <p className="popup-concesionario-texto">{concesionario.telefono}</p>
-                  )}
-                  <p className="popup-concesionario-texto">{concesionario.email}</p>
-                </div>
-              </Popup>
-            </Marker>
-          ))}
-          <AjustarVista concesionarios={concesionarios} seleccionado={seleccionado} />
-        </>
-      )}
-    </MapContainer>
+                </Popup>
+              </Marker>
+            ))}
+            <BuscadorDireccion onSeleccionar={onBuscarDireccion ?? (() => undefined)} />
+            <BotonCentrarMapa concesionarios={concesionarios} />
+            <AjustarVista concesionarios={concesionarios} seleccionado={seleccionado} />
+          </>
+        )}
+      </MapContainer>
+    </div>
   )
 }
 

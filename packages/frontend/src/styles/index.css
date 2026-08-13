@@ -191,6 +191,43 @@ body {
   font-size: 1rem;
 }
 
+.popup-concesionario-acciones {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.popup-boton {
+  flex: 1;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.popup-boton-primario {
+  background: #ffcc00;
+  color: #000000;
+  border: 1px solid #ffcc00;
+}
+
+.popup-boton-primario:hover {
+  background: #e6b800;
+}
+
+.popup-boton-secundario {
+  background: transparent;
+  color: #ffffff;
+  border: 1px solid #737373;
+}
+
+.popup-boton-secundario:hover {
+  border-color: #ffcc00;
+  color: #ffcc00;
+}
+
 .popup-concesionario-texto {
   margin: 0.125rem 0;
   color: #d4d4d4;
