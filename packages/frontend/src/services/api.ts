@@ -6,6 +6,8 @@ import {
   CreateConcesionarioInput,
   UpdateConcesionarioInput,
 } from '../types/concesionario'
+import { InteraccionCrm, CreateInteraccionInput } from '../types/interaccion'
+import { Usuario } from '../types/usuario'
 
 class ApiService {
   private client: AxiosInstance
@@ -51,7 +53,11 @@ class ApiService {
     } catch (error: any) {
       return {
         success: false,
-        error: error.response?.data?.error || error.message,
+        error:
+          error.response?.data?.error ||
+          (error.response
+            ? `Error del servidor (${error.response.status})`
+            : 'Error de conexión con el servidor'),
       }
     }
   }
@@ -63,7 +69,11 @@ class ApiService {
     } catch (error: any) {
       return {
         success: false,
-        error: error.response?.data?.error || error.message,
+        error:
+          error.response?.data?.error ||
+          (error.response
+            ? `Error del servidor (${error.response.status})`
+            : 'Error de conexión con el servidor'),
       }
     }
   }
@@ -75,7 +85,11 @@ class ApiService {
     } catch (error: any) {
       return {
         success: false,
-        error: error.response?.data?.error || error.message,
+        error:
+          error.response?.data?.error ||
+          (error.response
+            ? `Error del servidor (${error.response.status})`
+            : 'Error de conexión con el servidor'),
       }
     }
   }
@@ -87,7 +101,11 @@ class ApiService {
     } catch (error: any) {
       return {
         success: false,
-        error: error.response?.data?.error || error.message,
+        error:
+          error.response?.data?.error ||
+          (error.response
+            ? `Error del servidor (${error.response.status})`
+            : 'Error de conexión con el servidor'),
       }
     }
   }
@@ -99,7 +117,11 @@ class ApiService {
     } catch (error: any) {
       return {
         success: false,
-        error: error.response?.data?.error || error.message,
+        error:
+          error.response?.data?.error ||
+          (error.response
+            ? `Error del servidor (${error.response.status})`
+            : 'Error de conexión con el servidor'),
       }
     }
   }
@@ -109,7 +131,7 @@ class ApiService {
    * estado operativo. Devuelve la paginación desempaquetada.
    */
   async getConcesionarios(filters: ConcesionarioFilters = {}): Promise<PaginatedResponse<Concesionario>> {
-    const response = await this.get<PaginatedResponse<Concesionario>>('/v1/concesionarios', {
+    const response = await this.get<PaginatedResponse<Concesionario>>('/concesionarios', {
       params: filters,
     })
     if (!response.success || !response.data) {
@@ -120,7 +142,7 @@ class ApiService {
 
   /** GET /api/v1/concesionarios/:id - obtiene un concesionario por id. */
   async getConcesionarioById(id: string): Promise<Concesionario> {
-    const response = await this.get<Concesionario>(`/v1/concesionarios/${id}`)
+    const response = await this.get<Concesionario>(`/concesionarios/${id}`)
     if (!response.success || !response.data) {
       throw new Error(response.error || 'Concesionario no encontrado')
     }
@@ -129,7 +151,7 @@ class ApiService {
 
   /** POST /api/v1/concesionarios - crea un concesionario. */
   async createConcesionario(input: CreateConcesionarioInput): Promise<Concesionario> {
-    const response = await this.post<Concesionario>('/v1/concesionarios', input)
+    const response = await this.post<Concesionario>('/concesionarios', input)
     if (!response.success || !response.data) {
       throw new Error(response.error || 'Error al crear el concesionario')
     }
@@ -138,9 +160,42 @@ class ApiService {
 
   /** PUT /api/v1/concesionarios/:id - actualiza datos o estado operativo. */
   async updateConcesionario(id: string, input: UpdateConcesionarioInput): Promise<Concesionario> {
-    const response = await this.put<Concesionario>(`/v1/concesionarios/${id}`, input)
+    const response = await this.put<Concesionario>(`/concesionarios/${id}`, input)
     if (!response.success || !response.data) {
       throw new Error(response.error || 'Error al actualizar el concesionario')
+    }
+    return response.data
+  }
+
+  /**
+   * GET /api/v1/crm/concesionario/:concesionarioId - historial de
+   * interacciones de un concesionario. Devuelve la paginación desempaquetada.
+   */
+  async getInteracciones(concesionarioId: string): Promise<PaginatedResponse<InteraccionCrm>> {
+    const response = await this.get<PaginatedResponse<InteraccionCrm>>(
+      `/v1/crm/concesionario/${concesionarioId}`,
+      { params: { limit: 100 } }
+    )
+    if (!response.success || !response.data) {
+      throw new Error(response.error || 'Error al obtener el historial de interacciones')
+    }
+    return response.data
+  }
+
+  /** POST /api/v1/crm - registra una interacción. */
+  async createInteraccion(input: CreateInteraccionInput): Promise<InteraccionCrm> {
+    const response = await this.post<InteraccionCrm>('/v1/crm', input)
+    if (!response.success || !response.data) {
+      throw new Error(response.error || 'Error al registrar la interacción')
+    }
+    return response.data
+  }
+
+  /** GET /api/v1/users - lista usuarios activos (para selects de responsables). */
+  async getUsuarios(): Promise<Usuario[]> {
+    const response = await this.get<Usuario[]>('/v1/users')
+    if (!response.success || !response.data) {
+      throw new Error(response.error || 'Error al obtener los usuarios')
     }
     return response.data
   }
