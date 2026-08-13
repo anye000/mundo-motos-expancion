@@ -1,8 +1,10 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react'
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet'
+import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
+import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from 'react-leaflet'
 import { MapPin, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { apiService } from '@services/api'
+import { BuscadorDireccion } from '@components/BuscadorDireccion'
+import { ResultadoGeocodificacion } from '@utils/geocodificacion'
 import { iconoConcesionario } from '@components/MapaConcesionarios'
 import { Concesionario, EstadoOperativo, TipoExpansion } from '../types/concesionario'
 
@@ -50,6 +52,27 @@ function ClicUbicacion({ onClic }: { onClic: (lat: number, lng: number) => void 
   return null
 }
 
+/** Vuela al marcador cuando cambia su posición, salvo mientras se arrastra. */
+function VolarAUbicacion({
+  lat,
+  lng,
+  arrastrandoRef,
+}: {
+  lat: number
+  lng: number
+  arrastrandoRef: React.MutableRefObject<boolean>
+}) {
+  const map = useMap()
+
+  useEffect(() => {
+    if (!arrastrandoRef.current) {
+      map.flyTo([lat, lng], 14, { duration: 0.6 })
+    }
+  }, [lat, lng, map, arrastrandoRef])
+
+  return null
+}
+
 export interface ConcesionarioModalProps {
   abierto: boolean
   concesionario?: Concesionario | null
@@ -88,6 +111,7 @@ export function ConcesionarioModal({
   const [form, setForm] = useState<FormConcesionario>(FORM_INICIAL)
   const [error, setError] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
+  const arrastrandoRef = useRef(false)
 
   useEffect(() => {
     if (abierto) {
@@ -114,6 +138,17 @@ export function ConcesionarioModal({
       ...prev,
       latitud: lat.toFixed(6),
       longitud: lng.toFixed(6),
+    }))
+  }
+
+  function manejarResultadoBuscador(resultado: ResultadoGeocodificacion) {
+    setForm((prev) => ({
+      ...prev,
+      latitud: resultado.lat.toFixed(6),
+      longitud: resultado.lng.toFixed(6),
+      ciudad: prev.ciudad || resultado.ciudad,
+      departamento: prev.departamento || resultado.departamento,
+      direccion: prev.direccion || resultado.direccion,
     }))
   }
 
@@ -178,7 +213,7 @@ export function ConcesionarioModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+      className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/70 p-4"
       onClick={onCerrar}
     >
       <div
@@ -364,10 +399,29 @@ export function ConcesionarioModal({
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
                 <ClicUbicacion onClic={fijarUbicacion} />
+                <BuscadorDireccion onSeleccionar={manejarResultadoBuscador} placeholder="Buscar dirección..." />
                 {ubicacion && (
                   <Marker
                     position={[ubicacion.lat, ubicacion.lng]}
                     icon={iconoConcesionario('activo')}
+                    draggable
+                    eventHandlers={{
+                      dragstart: () => {
+                        arrastrandoRef.current = true
+                      },
+                      dragend: (e) => {
+                        arrastrandoRef.current = false
+                        const pos = (e.target as L.Marker).getLatLng()
+                        fijarUbicacion(pos.lat, pos.lng)
+                      },
+                    }}
+                  />
+                )}
+                {ubicacion && (
+                  <VolarAUbicacion
+                    lat={ubicacion.lat}
+                    lng={ubicacion.lng}
+                    arrastrandoRef={arrastrandoRef}
                   />
                 )}
               </MapContainer>
