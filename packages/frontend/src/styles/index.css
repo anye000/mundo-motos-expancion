@@ -141,39 +141,19 @@ body {
   border: none;
 }
 
-.mm-pin {
-  width: 28px;
-  height: 28px;
-  border-radius: 50% 50% 50% 0;
-  transform: rotate(-45deg);
-  border: 3px solid #000000;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+.mm-pin-svg {
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5));
   cursor: pointer;
   transition: transform 0.15s ease;
 }
 
-.mm-pin:hover {
-  transform: rotate(-45deg) scale(1.2);
+.mm-pin-svg:hover {
+  transform: scale(1.15);
+  transform-origin: bottom center;
 }
 
-.mm-pin-activo {
-  background: #ffcc00;
-}
-
-.mm-pin-inactivo {
-  background: #a3a3a3;
-}
-
-.mm-pin-proximo {
-  background: #ffcc00;
-}
-
-.mm-pin-en_ejecucion {
-  background: #f59e0b;
-}
-
-.mm-pin-completado {
-  background: #10b981;
+.mm-pin-svg svg {
+  display: block;
 }
 
 .leaflet-container {

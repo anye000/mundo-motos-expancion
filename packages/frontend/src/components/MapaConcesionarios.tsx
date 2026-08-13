@@ -5,14 +5,39 @@ import { Concesionario, Coordenadas, EstadoOperativo } from '../types/concesiona
 
 const CENTRO_COLOMBIA: [number, number] = [4.60971, -74.08175]
 
-/** Crea el icono personalizado (pin) con la identidad de Mundo Motos. */
+const COLORES_PIN: Record<
+  EstadoOperativo,
+  { relleno: string; borde: string; punto: string; check?: boolean }
+> = {
+  activo: { relleno: '#FFCC00', borde: '#000000', punto: '#FFFFFF' },
+  inactivo: { relleno: '#A3A3A3', borde: '#000000', punto: '#FFFFFF' },
+  proximo: { relleno: '#FFFFFF', borde: '#FFCC00', punto: '#000000' },
+  en_ejecucion: { relleno: '#F59E0B', borde: '#000000', punto: '#FFFFFF' },
+  completado: { relleno: '#10B981', borde: '#000000', punto: '#FFFFFF', check: true },
+}
+
+/** SVG del pin teardrop corporativo (negro/amarillo/blanco + acento por estado). */
+function svgPin(estado: EstadoOperativo): string {
+  const colores = COLORES_PIN[estado]
+  const interior = colores.check
+    ? '<path d="M13 17.3 l2.6 2.6 l5.2 -5.8" fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>'
+    : `<circle cx="17" cy="17" r="5.5" fill="${colores.punto}"/>`
+  return [
+    '<svg width="34" height="44" viewBox="0 0 34 44" xmlns="http://www.w3.org/2000/svg">',
+    `<path d="M17 1 C8.72 1 2 7.72 2 16 C2 27 17 43 17 43 C17 43 32 27 32 16 C32 7.72 25.28 1 17 1 Z" fill="${colores.relleno}" stroke="${colores.borde}" stroke-width="2.5"/>`,
+    interior,
+    '</svg>',
+  ].join('')
+}
+
+/** Crea el icono personalizado (pin SVG) con la identidad de Mundo Motos. */
 export function iconoConcesionario(estado: EstadoOperativo): L.DivIcon {
   return L.divIcon({
-    className: 'mm-pin-wrapper',
-    html: `<div class="mm-pin mm-pin-${estado}"></div>`,
-    iconSize: [28, 28],
-    iconAnchor: [14, 28],
-    popupAnchor: [0, -30],
+    className: 'mm-pin-wrapper mm-pin-svg',
+    html: svgPin(estado),
+    iconSize: [34, 44],
+    iconAnchor: [17, 42],
+    popupAnchor: [0, -38],
   })
 }
 
