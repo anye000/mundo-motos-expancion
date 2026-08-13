@@ -1,0 +1,63 @@
+# ============================================
+# Mundo Motos CRM - Render Blueprint (IaC)
+# ============================================
+# Monorepo npm workspaces: packages/backend (Express/TS API) + packages/frontend (React/Vite/PWA)
+#
+# NOTA IMPORTANTE (monorepo):
+#   - Las dependencias se instalan desde la raíz del repo (npm workspaces). Por eso
+#     los comandos usan `--workspace=@mundo-motos/<pkg>` y NO rootDirectory por paquete
+#     (no existe package-lock.json a nivel de cada paquete).
+#   - Render inyecta NODE_ENV=production y npm omite los devDependencies (typescript,
+#     vite, tsx) durante el build. Por eso `npm install --include=dev`.
+#   - El backend arranca con `tsx src/index.ts` (resuelve aliases @utils/*, @config/*
+#     y ESM); `node dist/index.js` NO funciona (imports sin extensión + aliases).
+#
+# Referencia: https://render.com/docs/blueprint-spec
+
+services:
+  # ------------------------------------------------------------
+  # 1) API Backend (Express + Supabase)
+  # ------------------------------------------------------------
+  - type: web
+    name: mundo-motos-backend
+    runtime: node
+    plan: free
+    region: oregon
+    branch: main
+    autoDeploy: true
+    healthCheckPath: /health
+    buildCommand: npm install --include=dev && npm run build --workspace=@mundo-motos/backend
+    startCommand: npm run start --workspace=@mundo-motos/backend
+    envVars:
+      # Entorno
+      - key: NODE_ENV
+        value: production
+      # CORS: origen del frontend desplegado
+      - key: CORS_ORIGIN
+        value: https://mundo-motos-frontend.onrender.com
+      # Supabase (proyecto zpjoneyojbtutszvwyxg)
+      # SUPABASE_URL y SUPABASE_ANON_KEY son públicas (publishable keys)
+      - key: SUPABASE_URL
+        value: https://zpjoneyojbtutszvwyxg.supabase.co
+      - key: SUPABASE_ANON_KEY
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpwam9uZXlvamJ0dXRzenZ3eXhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY1ODY5NzAsImV4cCI6MjEwMjE2Mjk3MH0.GiV1CepzkYPs3WgGhYSdk_UYV96wkiXr7bB7rg45-zU
+      # SECRETO: defínela en el Dashboard de Render (sync: false = nunca en Git).
+      # Opcional: el backend usa la anon key como fallback si no está definida.
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+
+  # ------------------------------------------------------------
+  # 2) Frontend (React/Vite/PWA -> estático)
+  # ------------------------------------------------------------
+  - type: web
+    name: mundo-motos-frontend
+    runtime: static
+    plan: free
+    branch: main
+    autoDeploy: true
+    buildCommand: npm install --include=dev && npm run build --workspace=@mundo-motos/frontend
+    staticPublishPath: packages/frontend/dist
+    envVars:
+      # URL pública del backend desplegado (usada en tiempo de build por Vite)
+      - key: VITE_API_BASE_URL
+        value: https://mundo-motos-backend.onrender.com/api/v1
