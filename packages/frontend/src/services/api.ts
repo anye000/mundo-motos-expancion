@@ -173,6 +173,14 @@ class ApiService {
     return response.data
   }
 
+  /** DELETE /api/v1/concesionarios/:id - elimina un concesionario. */
+  async deleteConcesionario(id: string): Promise<void> {
+    const response = await this.delete<{ id: string }>(`/concesionarios/${id}`)
+    if (!response.success) {
+      throw new Error(response.error || 'Error al eliminar el concesionario')
+    }
+  }
+
   /**
    * GET /api/v1/crm/concesionario/:concesionarioId - historial de
    * interacciones de un concesionario. Devuelve la paginación desempaquetada.

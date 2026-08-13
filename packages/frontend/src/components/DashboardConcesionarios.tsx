@@ -1,8 +1,22 @@
 import { useMemo, useState } from 'react'
-import { Building2, CalendarDays, CheckCircle2, Filter, Loader2, MapPin, Plus, XCircle } from 'lucide-react'
+import toast from 'react-hot-toast'
+import {
+  Building2,
+  CalendarDays,
+  CheckCircle2,
+  Filter,
+  Loader2,
+  MapPin,
+  Pencil,
+  Plus,
+  Trash2,
+  XCircle,
+} from 'lucide-react'
 import { useConcesionarios } from '@hooks/useConcesionarios'
+import { apiService } from '@services/api'
 import { MapaConcesionarios } from '@components/MapaConcesionarios'
 import { ConcesionarioModal } from '@components/ConcesionarioModal'
+import { ConfirmarEliminacionModal } from '@components/ConfirmarEliminacionModal'
 import { DetalleConcesionarioModal } from '@components/DetalleConcesionarioModal'
 import { CronogramaExpansions } from '@components/CronogramaExpansions'
 import { Concesionario, EstadoOperativo } from '../types/concesionario'
@@ -42,11 +56,43 @@ export function DashboardConcesionarios() {
   } = useConcesionarios()
   const [seleccionado, setSeleccionado] = useState<Concesionario | null>(null)
   const [modalAbierto, setModalAbierto] = useState(false)
+  const [editando, setEditando] = useState<Concesionario | null>(null)
   const [detalle, setDetalle] = useState<Concesionario | null>(null)
+  const [eliminar, setEliminar] = useState<Concesionario | null>(null)
+  const [eliminando, setEliminando] = useState(false)
 
   function seleccionar(concesionario: Concesionario) {
     setSeleccionado(concesionario)
     setDetalle(concesionario)
+  }
+
+  function abrirEdicion(concesionario: Concesionario) {
+    setEditando(concesionario)
+    setDetalle(null)
+  }
+
+  function cerrarModal() {
+    setModalAbierto(false)
+    setEditando(null)
+  }
+
+  async function confirmarEliminacion() {
+    if (!eliminar) return
+    setEliminando(true)
+    try {
+      await apiService.deleteConcesionario(eliminar.id)
+      toast.success('Concesionario eliminado exitosamente')
+      if (seleccionado?.id === eliminar.id) {
+        setSeleccionado(null)
+        setDetalle(null)
+      }
+      setEliminar(null)
+      recargar()
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Error al eliminar el concesionario')
+    } finally {
+      setEliminando(false)
+    }
   }
 
   const totales = useMemo(
@@ -133,14 +179,14 @@ export function DashboardConcesionarios() {
 
       {/* Mapa + panel lateral */}
       <div className="flex flex-col lg:flex-row gap-6">
-        <div className="relative lg:flex-1 min-h-[420px] lg:min-h-[560px] overflow-hidden rounded-xl border border-mm-gray-700 bg-mm-gray-800">
+        <div className="relative z-0 lg:flex-1 min-h-[420px] lg:min-h-[560px] overflow-hidden rounded-xl border border-mm-gray-700 bg-mm-gray-800">
           <MapaConcesionarios
             concesionarios={concesionarios}
             seleccionado={seleccionado}
             onSeleccionar={seleccionar}
           />
           {cargando && (
-            <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/40">
+            <div className="pointer-events-none absolute inset-0 z-[1000] flex items-center justify-center bg-black/40">
               <div className="flex items-center gap-2 rounded-lg bg-mm-gray-800 px-4 py-2 text-sm text-mm-gray-200">
                 <Loader2 className="h-4 w-4 animate-spin text-mm-yellow" />
                 Cargando concesionarios...
@@ -241,25 +287,55 @@ export function DashboardConcesionarios() {
                   const activo = seleccionado?.id === concesionario.id
                   return (
                     <li key={concesionario.id}>
-                      <button
-                        type="button"
-                        onClick={() => seleccionar(concesionario)}
-                        className={`w-full rounded-lg border px-3 py-2 text-left transition-colors ${
+                      <div
+                        className={`flex items-center gap-2 rounded-lg border px-3 py-2 transition-colors ${
                           activo
                             ? 'border-mm-yellow bg-mm-gray-700'
                             : 'border-mm-gray-700 bg-mm-gray-900 hover:bg-mm-gray-700'
                         }`}
                       >
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="truncate text-sm font-semibold text-white">
-                            {concesionario.nombre}
+                        <button
+                          type="button"
+                          onClick={() => seleccionar(concesionario)}
+                          className="min-w-0 flex-1 text-left"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="truncate text-sm font-semibold text-white">
+                              {concesionario.nombre}
+                            </p>
+                            <BadgeEstado estado={concesionario.estado} />
+                          </div>
+                          <p className="mt-0.5 text-xs text-mm-gray-400">
+                            {concesionario.ciudad} · {concesionario.departamento}
                           </p>
-                          <BadgeEstado estado={concesionario.estado} />
+                        </button>
+                        <div className="flex shrink-0 items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              abrirEdicion(concesionario)
+                            }}
+                            className="rounded-lg border border-mm-gray-600 p-1.5 text-mm-yellow hover:bg-mm-yellow hover:text-mm-black transition-colors"
+                            aria-label={`Editar ${concesionario.nombre}`}
+                            title="Editar"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setEliminar(concesionario)
+                            }}
+                            className="rounded-lg border border-mm-gray-600 p-1.5 text-mm-error hover:bg-mm-error hover:text-white transition-colors"
+                            aria-label={`Eliminar ${concesionario.nombre}`}
+                            title="Eliminar"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
                         </div>
-                        <p className="mt-0.5 text-xs text-mm-gray-400">
-                          {concesionario.ciudad} · {concesionario.departamento}
-                        </p>
-                      </button>
+                      </div>
                     </li>
                   )
                 })}
@@ -272,13 +348,22 @@ export function DashboardConcesionarios() {
       )}
 
       <ConcesionarioModal
-        abierto={modalAbierto}
-        onCerrar={() => setModalAbierto(false)}
-        onCreado={() => {
-          setModalAbierto(false)
+        abierto={modalAbierto || editando !== null}
+        concesionario={editando}
+        onCerrar={cerrarModal}
+        onGuardado={() => {
+          cerrarModal()
           setSeleccionado(null)
           recargar()
         }}
+      />
+
+      <ConfirmarEliminacionModal
+        abierto={eliminar !== null}
+        concesionario={eliminar}
+        eliminando={eliminando}
+        onCancelar={() => setEliminar(null)}
+        onConfirmar={confirmarEliminacion}
       />
 
       <DetalleConcesionarioModal concesionario={detalle} onCerrar={() => setDetalle(null)} />

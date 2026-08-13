@@ -21,7 +21,7 @@ function App() {
 
         <footer className="bg-mm-black border-t-4 border-mm-yellow mt-auto">
           <div className="container mx-auto px-4 py-4 text-center text-mm-gray-500">
-            <p>&copy; 2024 Mundo Motos. Todos los derechos reservados.</p>
+            <p>&copy; 2026 Mundo Motos. Todos los derechos reservados.</p>
           </div>
         </footer>
 

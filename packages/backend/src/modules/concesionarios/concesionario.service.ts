@@ -230,3 +230,27 @@ export async function updateConcesionario(
 
   return data as Concesionario;
 }
+
+/**
+ * Elimina físicamente un concesionario. El historial de interacciones CRM se
+ * elimina en cascada (ON DELETE CASCADE en interacciones_crm).
+ */
+export async function deleteConcesionario(id: string): Promise<void> {
+  if (!id) {
+    throw new ApiError('El identificador del concesionario es requerido', 400);
+  }
+
+  const { data, error } = await supabase
+    .from(TABLE)
+    .delete()
+    .eq('id', id)
+    .select('id')
+    .maybeSingle();
+
+  if (error) {
+    throw mapSupabaseError(error, 'Error al eliminar el concesionario');
+  }
+  if (!data) {
+    throw new ApiError('Concesionario no encontrado', 404);
+  }
+}

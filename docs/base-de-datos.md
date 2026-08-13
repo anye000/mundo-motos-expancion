@@ -230,10 +230,10 @@ CREATE INDEX idx_crm_contacts_email ON crm_contacts(email);
   "valor_oportunidad": 5000000,
   "probabilidad_cierre": 65,
   "proxima_accion": "enviar propuesta",
-  "fecha_proxima_accion": "2024-02-15",
+  "fecha_proxima_accion": "2026-02-15",
   "historial_interacciones": [
     {
-      "fecha": "2024-02-10T14:30:00Z",
+      "fecha": "2026-02-10T14:30:00Z",
       "tipo": "llamada",
       "duracion_minutos": 15,
       "notas": "Mostró interés en modelo XYZ"

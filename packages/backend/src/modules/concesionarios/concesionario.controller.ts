@@ -92,3 +92,17 @@ export async function updateConcesionario(
     next(error);
   }
 }
+
+/** DELETE /api/v1/concesionarios/:id - elimina un concesionario. */
+export async function deleteConcesionario(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    await concesionarioService.deleteConcesionario(req.params.id);
+    sendSuccess(res, { id: req.params.id }, 'Concesionario eliminado');
+  } catch (error) {
+    next(error);
+  }
+}

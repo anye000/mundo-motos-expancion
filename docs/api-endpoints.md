@@ -109,8 +109,8 @@ Obtener lista de concesionarios con paginación.
           "horarios": {"lunes": "8:00-18:00"},
           "servicios": ["venta", "mantenimiento"]
         },
-        "createdAt": "2024-01-15T10:30:00Z",
-        "updatedAt": "2024-02-10T14:30:00Z"
+        "createdAt": "2026-01-15T10:30:00Z",
+        "updatedAt": "2026-02-10T14:30:00Z"
       }
     ],
     "total": 25,
@@ -257,7 +257,7 @@ Obtener todas las ubicaciones.
         "tipo": "principal",
         "estado": "activo",
         "metadatos": {},
-        "createdAt": "2024-01-15T10:30:00Z"
+        "createdAt": "2026-01-15T10:30:00Z"
       }
     ],
     "total": 5,
@@ -412,7 +412,7 @@ Obtener contactos con filtros.
           "valor_oportunidad": 3000000,
           "probabilidad_cierre": 65
         },
-        "createdAt": "2024-02-01T09:30:00Z"
+        "createdAt": "2026-02-01T09:30:00Z"
       }
     ],
     "total": 45,

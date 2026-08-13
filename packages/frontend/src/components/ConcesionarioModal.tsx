@@ -48,21 +48,43 @@ function ClicUbicacion({ onClic }: { onClic: (lat: number, lng: number) => void 
 
 export interface ConcesionarioModalProps {
   abierto: boolean
+  concesionario?: Concesionario | null
   onCerrar: () => void
-  onCreado: (concesionario: Concesionario) => void
+  onGuardado: (concesionario: Concesionario) => void
 }
 
-export function ConcesionarioModal({ abierto, onCerrar, onCreado }: ConcesionarioModalProps) {
+function aFormulario(concesionario: Concesionario): FormConcesionario {
+  return {
+    nombre: concesionario.nombre,
+    razon_social: concesionario.razon_social,
+    nit: concesionario.nit,
+    email: concesionario.email,
+    telefono: concesionario.telefono ?? '',
+    ciudad: concesionario.ciudad,
+    departamento: concesionario.departamento,
+    direccion: concesionario.direccion,
+    latitud: String(concesionario.latitud),
+    longitud: String(concesionario.longitud),
+    estado: concesionario.estado,
+  }
+}
+
+export function ConcesionarioModal({
+  abierto,
+  concesionario = null,
+  onCerrar,
+  onGuardado,
+}: ConcesionarioModalProps) {
   const [form, setForm] = useState<FormConcesionario>(FORM_INICIAL)
   const [error, setError] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
 
   useEffect(() => {
     if (abierto) {
-      setForm(FORM_INICIAL)
+      setForm(concesionario ? aFormulario(concesionario) : FORM_INICIAL)
       setError(null)
     }
-  }, [abierto])
+  }, [abierto, concesionario])
 
   const ubicacion = useMemo(() => {
     const lat = Number(form.latitud)
@@ -106,7 +128,7 @@ export function ConcesionarioModal({ abierto, onCerrar, onCreado }: Concesionari
     setEnviando(true)
     setError(null)
     try {
-      const creado = await apiService.createConcesionario({
+      const payload = {
         nombre: nombre.trim(),
         razon_social: razon_social.trim(),
         nit: nit.trim(),
@@ -118,11 +140,18 @@ export function ConcesionarioModal({ abierto, onCerrar, onCreado }: Concesionari
         latitud: lat,
         longitud: lng,
         estado: form.estado,
-      })
-      toast.success('Concesionario creado exitosamente')
-      onCreado(creado)
+      }
+      const guardado = concesionario
+        ? await apiService.updateConcesionario(concesionario.id, payload)
+        : await apiService.createConcesionario(payload)
+      toast.success(
+        concesionario
+          ? 'Concesionario actualizado exitosamente'
+          : 'Concesionario creado exitosamente'
+      )
+      onGuardado(guardado)
     } catch (e) {
-      const mensaje = e instanceof Error ? e.message : 'Error al crear el concesionario'
+      const mensaje = e instanceof Error ? e.message : 'Error al guardar el concesionario'
       setError(mensaje)
       toast.error(mensaje)
     } finally {
@@ -142,7 +171,9 @@ export function ConcesionarioModal({ abierto, onCerrar, onCreado }: Concesionari
         <div className="flex items-center justify-between border-b-2 border-mm-yellow px-6 py-4">
           <div className="flex items-center gap-2">
             <MapPin className="h-5 w-5 text-mm-yellow" />
-            <h2 className="text-lg font-bold text-mm-yellow">Nuevo concesionario</h2>
+            <h2 className="text-lg font-bold text-mm-yellow">
+              {concesionario ? 'Editar concesionario' : 'Nuevo concesionario'}
+            </h2>
           </div>
           <button
             type="button"
@@ -270,7 +301,7 @@ export function ConcesionarioModal({ abierto, onCerrar, onCreado }: Concesionari
                 />
               </label>
             </div>
-            <div className="mt-3 h-64 w-full overflow-hidden rounded-lg border border-mm-gray-600">
+            <div className="relative z-0 mt-3 h-64 w-full overflow-hidden rounded-lg border border-mm-gray-600">
               <MapContainer
                 center={CENTRO_COLOMBIA}
                 zoom={5}
@@ -311,7 +342,11 @@ export function ConcesionarioModal({ abierto, onCerrar, onCreado }: Concesionari
               disabled={enviando}
               className="rounded-lg bg-mm-yellow px-4 py-2 text-sm font-bold text-mm-black hover:bg-mm-yellow-dark disabled:opacity-50 transition-colors"
             >
-              {enviando ? 'Guardando...' : 'Guardar concesionario'}
+              {enviando
+                ? 'Guardando...'
+                : concesionario
+                  ? 'Guardar cambios'
+                  : 'Guardar concesionario'}
             </button>
           </div>
         </form>

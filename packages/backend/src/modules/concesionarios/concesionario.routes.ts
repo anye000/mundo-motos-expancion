@@ -10,6 +10,7 @@ import {
   getConcesionario,
   createConcesionario,
   updateConcesionario,
+  deleteConcesionario,
 } from './concesionario.controller';
 
 const concesionariosRouter: Router = Router();
@@ -18,5 +19,6 @@ concesionariosRouter.get('/', listConcesionarios);
 concesionariosRouter.get('/:id', getConcesionario);
 concesionariosRouter.post('/', createConcesionario);
 concesionariosRouter.put('/:id', updateConcesionario);
+concesionariosRouter.delete('/:id', deleteConcesionario);
 
 export default concesionariosRouter;

@@ -772,7 +772,7 @@ feat(crm): agregar búsqueda de contactos por email
 Este proyecto está bajo licencia [MIT](LICENSE).
 
 ```
-MIT License © 2024 Mundo Motos
+MIT License © 2026 Mundo Motos
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

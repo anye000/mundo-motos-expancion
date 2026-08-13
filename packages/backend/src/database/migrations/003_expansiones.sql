@@ -27,14 +27,8 @@ CREATE INDEX idx_expansiones_geom ON expansiones USING GIST(
   ll_to_earth(latitud, longitud)
 );
 
--- Datos semilla: hoja de ruta comercial agosto/septiembre 2026.
-INSERT INTO expansiones (concesionario, locacion, fecha_apertura, estado, avance, latitud, longitud, observaciones) VALUES
-  ('Mundo Motos La California', 'La California, Caracas', '2026-08-20', 'en_ejecucion', 60, 10.4757, -66.8414, 'Adecuación del local en curso.'),
-  ('Mundo Motos 2 Caminos', '2 Caminos, Caracas', '2026-08-28', 'proximo', 20, 10.4800, -66.8300, 'Firma de contrato de arrendamiento.'),
-  ('Mundo Motos Táchira', 'San Cristóbal, Táchira', '2026-09-04', 'proximo', 10, 7.7723, -72.2250, 'Estudio de mercado en ejecución.'),
-  ('Mundo Motos Maturín', 'Maturín, Monagas', '2026-09-18', 'proximo', 5, 9.7457, -63.1832, 'Selección de punto comercial.'),
-  ('Mundo Motos Maracaibo', 'Maracaibo, Zulia', '2026-09-30', 'proximo', 0, 10.6544, -71.6489, 'Evaluación inicial de la plaza.'),
-  ('Mundo Motos Valencia', 'Valencia, Carabobo', '2026-06-20', 'completado', 100, 10.1667, -68.0000, 'Apertura inaugurada.');
+-- Nota: sin datos semilla. La tabla inicia vacía para el arranque en blanco del CRM.
+-- La limpieza de datos semilla previamente aplicados se hace en 005_limpiar_datos_semilla.sql.
 
 -- RLS habilitado. Las políticas de acceso (anon/authenticated full access)
 -- se definen en la migración 004_rls_politicas_seguridad.sql.

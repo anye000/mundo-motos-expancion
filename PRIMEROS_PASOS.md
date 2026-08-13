@@ -50,7 +50,7 @@ SUPABASE_ANON_KEY=your-anon-key-here
 curl http://localhost:3000/health
 
 # Response esperado:
-# {"status":"ok","timestamp":"2024-02-13T10:30:00Z","environment":"development"}
+# {"status":"ok","timestamp":"2026-02-13T10:30:00Z","environment":"development"}
 ```
 
 ### Iniciar Desarrollo
