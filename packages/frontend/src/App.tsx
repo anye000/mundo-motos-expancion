@@ -1,9 +1,10 @@
 import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
-import { Bike, CalendarDays, LayoutDashboard, MapPin, type LucideIcon } from 'lucide-react'
+import { Bike, BarChart3, CalendarDays, LayoutDashboard, MapPin, type LucideIcon } from 'lucide-react'
 import DashboardGerencial from '@components/DashboardGerencial'
 import DashboardConcesionarios from '@components/DashboardConcesionarios'
 import CronogramaExpansions from '@components/CronogramaExpansions'
+import ReportesView from '@components/ReportesView'
 
 interface LinkNav {
   to: string
@@ -16,6 +17,7 @@ const LINKS: LinkNav[] = [
   { to: '/', etiqueta: 'Dashboard', icono: LayoutDashboard, fin: true },
   { to: '/concesionarios', etiqueta: 'Concesionarios', icono: MapPin },
   { to: '/expansiones', etiqueta: 'Cronograma 2026', icono: CalendarDays },
+  { to: '/reportes', etiqueta: 'Reportes', icono: BarChart3 },
 ]
 
 function App() {
@@ -65,6 +67,7 @@ function App() {
             <Route path="/" element={<DashboardGerencial />} />
             <Route path="/concesionarios" element={<DashboardConcesionarios />} />
             <Route path="/expansiones" element={<CronogramaExpansions />} />
+            <Route path="/reportes" element={<ReportesView />} />
           </Routes>
         </main>
 
