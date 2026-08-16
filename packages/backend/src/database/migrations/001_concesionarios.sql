@@ -8,7 +8,7 @@ CREATE TABLE concesionarios (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   nombre VARCHAR(255) NOT NULL,
   razon_social VARCHAR(255) NOT NULL,
-  nit VARCHAR(20) NOT NULL UNIQUE,
+  rif VARCHAR(20) NOT NULL UNIQUE,
   email VARCHAR(255) NOT NULL,
   telefono VARCHAR(20),
   ciudad VARCHAR(100) NOT NULL,
@@ -26,7 +26,7 @@ CREATE TABLE concesionarios (
 );
 
 CREATE INDEX idx_concesionarios_gerente_id ON concesionarios(gerente_id);
-CREATE INDEX idx_concesionarios_nit ON concesionarios(nit);
+CREATE INDEX idx_concesionarios_rif ON concesionarios(rif);
 CREATE INDEX idx_concesionarios_estado ON concesionarios(estado);
 CREATE INDEX idx_concesionarios_ciudad ON concesionarios(ciudad);
 CREATE INDEX idx_concesionarios_geom ON concesionarios USING GIST(

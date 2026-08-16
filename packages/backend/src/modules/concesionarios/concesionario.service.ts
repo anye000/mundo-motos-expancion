@@ -44,6 +44,17 @@ function isTipoExpansion(value: unknown): value is TipoExpansion {
   );
 }
 
+function validateRIF(value: unknown, campo: string): string {
+  const texto = typeof value === 'string' ? value.trim() : ''
+  if (!texto) {
+    throw new ApiError(`El campo "${campo}" es requerido`, 400)
+  }
+  if (!/^[JVG]-?\d{8}-?\d$/.test(texto)) {
+    throw new ApiError(`El campo "${campo}" no tiene un formato RIF válido (ej. J-12345678-9)`, 400)
+  }
+  return texto
+}
+
 function validateFechaOpcional(value: unknown, campo: string): string | null {
   if (value === undefined || value === null || value === '') {
     return null;
@@ -141,7 +152,7 @@ export async function getConcesionarioById(id: string): Promise<Concesionario> {
 export async function createConcesionario(input: CreateConcesionarioInput): Promise<Concesionario> {
   const nombre = validateRequiredString(input.nombre, 'nombre');
   const razonSocial = validateRequiredString(input.razon_social, 'razon_social');
-  const nit = validateRequiredString(input.nit, 'nit');
+  const rif = validateRIF(input.rif, 'rif');
   const email = validateRequiredString(input.email, 'email');
   const ciudad = validateRequiredString(input.ciudad, 'ciudad');
   const departamento = validateRequiredString(input.departamento, 'departamento');
@@ -167,7 +178,7 @@ export async function createConcesionario(input: CreateConcesionarioInput): Prom
     .insert({
       nombre,
       razon_social: razonSocial,
-      nit,
+      rif,
       email,
       telefono: input.telefono ?? null,
       ciudad,
@@ -213,8 +224,8 @@ export async function updateConcesionario(
   if (input.razon_social !== undefined) {
     updates.razon_social = validateRequiredString(input.razon_social, 'razon_social');
   }
-  if (input.nit !== undefined) {
-    updates.nit = validateRequiredString(input.nit, 'nit');
+  if (input.rif !== undefined) {
+    updates.rif = validateRIF(input.rif, 'rif');
   }
   if (input.email !== undefined) {
     updates.email = validateRequiredString(input.email, 'email');

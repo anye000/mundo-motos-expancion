@@ -47,7 +47,7 @@ export interface Concesionario {
   id: UUID
   nombre: string
   razonSocial: string
-  nit: string
+  rif: string
   email: string
   telefono: string
   ciudad: string

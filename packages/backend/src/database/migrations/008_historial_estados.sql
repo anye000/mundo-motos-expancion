@@ -39,7 +39,7 @@ SET search_path = public
 AS $$
 DECLARE
   v_cols text[] := ARRAY[
-    'nombre', 'razon_social', 'nit', 'email', 'telefono', 'ciudad', 'departamento',
+    'nombre', 'razon_social', 'rif', 'email', 'telefono', 'ciudad', 'departamento',
     'direccion', 'latitud', 'longitud', 'gerente_id', 'estado',
     'fecha_apertura_programada', 'tipo_expansion', 'metadatos'
   ];

@@ -22,7 +22,7 @@ export interface Concesionario {
   id: string;
   nombre: string;
   razon_social: string;
-  nit: string;
+  rif: string;
   email: string;
   telefono: string | null;
   ciudad: string;
@@ -44,7 +44,7 @@ export interface Concesionario {
 export interface CreateConcesionarioInput {
   nombre: string;
   razon_social: string;
-  nit: string;
+  rif: string;
   email: string;
   telefono?: string | null;
   ciudad: string;
@@ -63,7 +63,7 @@ export interface CreateConcesionarioInput {
 export interface UpdateConcesionarioInput {
   nombre?: string;
   razon_social?: string;
-  nit?: string;
+  rif?: string;
   email?: string;
   telefono?: string | null;
   ciudad?: string;

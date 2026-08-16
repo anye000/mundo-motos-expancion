@@ -14,7 +14,7 @@ const CENTRO_VENEZUELA: [number, number] = [6.5, -66.5]
 interface FormConcesionario {
   nombre: string
   razon_social: string
-  nit: string
+  rif: string
   email: string
   telefono: string
   ciudad: string
@@ -30,7 +30,7 @@ interface FormConcesionario {
 const FORM_INICIAL: FormConcesionario = {
   nombre: '',
   razon_social: '',
-  nit: '',
+  rif: '',
   email: '',
   telefono: '',
   ciudad: '',
@@ -89,7 +89,7 @@ function aFormulario(concesionario: Concesionario): FormConcesionario {
   return {
     nombre: concesionario.nombre,
     razon_social: concesionario.razon_social,
-    nit: concesionario.nit,
+    rif: concesionario.rif,
     email: concesionario.email,
     telefono: concesionario.telefono ?? '',
     ciudad: concesionario.ciudad,
@@ -190,13 +190,17 @@ export function ConcesionarioModal({
 
   async function manejarEnvio(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    const { nombre, razon_social, nit, email, ciudad, departamento, direccion } = form
-    if (!nombre.trim() || !razon_social.trim() || !nit.trim() || !email.trim()) {
-      setError('Los campos nombre, razón social, NIT y email son obligatorios')
+    const { nombre, razon_social, rif, email, ciudad, departamento, direccion } = form
+    if (!nombre.trim() || !razon_social.trim() || !rif.trim() || !email.trim()) {
+      setError('Los campos nombre, razón social, RIF y email son obligatorios')
       return
     }
     if (!ciudad.trim() || !departamento.trim() || !direccion.trim()) {
       setError('Los campos ciudad, departamento y dirección son obligatorios')
+      return
+    }
+    if (!/^[JVG]-?\d{8}-?\d$/.test(rif.trim())) {
+      setError('Ingresa un RIF válido (ej. J-12345678-9)')
       return
     }
     const lat = Number(form.latitud)
@@ -217,7 +221,7 @@ export function ConcesionarioModal({
       const payload = {
         nombre: nombre.trim(),
         razon_social: razon_social.trim(),
-        nit: nit.trim(),
+        rif: rif.trim(),
         email: email.trim(),
         telefono: form.telefono.trim() || null,
         ciudad: ciudad.trim(),
@@ -295,12 +299,12 @@ export function ConcesionarioModal({
               />
             </label>
             <label className="block">
-              <span className="mb-1 block text-sm font-medium text-mm-gray-300">NIT *</span>
+              <span className="mb-1 block text-sm font-medium text-mm-gray-300">RIF *</span>
               <input
                 className="input-dark"
-                value={form.nit}
-                onChange={(e) => actualizar('nit', e.target.value)}
-                placeholder="900123456-7"
+                value={form.rif}
+                onChange={(e) => actualizar('rif', e.target.value)}
+                placeholder="J-12345678-9"
               />
             </label>
             <label className="block">

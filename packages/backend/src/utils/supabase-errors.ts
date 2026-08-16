@@ -2,7 +2,7 @@
  * Utilidades para mapear errores de Supabase/Postgres a ApiError con status HTTP.
  *
  * Códigos de error de Postgres manejados:
- * - 23505: violación de unicidad (ej. NIT duplicado)
+ * - 23505: violación de unicidad (ej. RIF duplicado)
  * - 23503: violación de llave foránea
  * - 22P02: conversión inválida (ej. UUID mal formado)
  */

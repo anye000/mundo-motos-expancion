@@ -87,8 +87,8 @@ export function DetalleConcesionarioModal({
                 </span>
               </div>
               <div>
-                <p className="text-xs font-medium text-mm-gray-400">NIT</p>
-                <p className="mt-1 text-sm text-mm-gray-200">{concesionario.nit}</p>
+                <p className="text-xs font-medium text-mm-gray-400">RIF</p>
+                <p className="mt-1 text-sm text-mm-gray-200">{concesionario.rif}</p>
               </div>
               <div>
                 <p className="text-xs font-medium text-mm-gray-400">Dirección</p>

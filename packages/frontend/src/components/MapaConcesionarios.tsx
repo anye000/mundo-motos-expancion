@@ -234,7 +234,7 @@ export function MapaConcesionarios({
                       </span>
                     </div>
                     <h3 className="popup-concesionario-titulo">{concesionario.nombre}</h3>
-                    <p className="popup-concesionario-texto">Código: {concesionario.nit}</p>
+                     <p className="popup-concesionario-texto">RIF: {concesionario.rif}</p>
                     <p className="popup-concesionario-texto">
                       {concesionario.ciudad} · {concesionario.departamento}
                     </p>
