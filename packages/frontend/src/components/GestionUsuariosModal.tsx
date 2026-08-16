@@ -20,7 +20,8 @@ export function GestionUsuariosModal({ abierto, onCerrar }: GestionUsuariosModal
   const [error, setError] = useState<string | null>(null)
 
   const [nombre, setNombre] = useState('')
-  const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('')
+  const [emailRespaldo, setEmailRespaldo] = useState('')
   const [password, setPassword] = useState('')
   const [mostrarPassword, setMostrarPassword] = useState(false)
   const [enviando, setEnviando] = useState(false)
@@ -48,8 +49,13 @@ export function GestionUsuariosModal({ abierto, onCerrar }: GestionUsuariosModal
   async function crearUsuario(e: FormEvent) {
     e.preventDefault()
     setError(null)
-    if (!email.trim() || !password.trim()) {
-      setError('El correo y la contraseña temporal son obligatorios')
+    const usuarioLimpio = username.trim()
+    if (!usuarioLimpio || !password.trim()) {
+      setError('El usuario y la contraseña temporal son obligatorios')
+      return
+    }
+    if (!/^[a-z0-9._-]{3,}$/i.test(usuarioLimpio)) {
+      setError('El usuario debe tener al menos 3 caracteres (letras, números, punto, guion o guion bajo)')
       return
     }
     if (password.length < 6) {
@@ -59,12 +65,14 @@ export function GestionUsuariosModal({ abierto, onCerrar }: GestionUsuariosModal
     setEnviando(true)
     try {
       await apiService.registrarUsuario({
-        email: email.trim(),
+        username: usuarioLimpio.toLowerCase(),
         password,
         nombre: nombre.trim(),
+        emailRespaldo: emailRespaldo.trim() || undefined,
       })
       toast.success('Acceso creado correctamente')
-      setEmail('')
+      setUsername('')
+      setEmailRespaldo('')
       setPassword('')
       setNombre('')
       setMostrarPassword(false)
@@ -79,13 +87,13 @@ export function GestionUsuariosModal({ abierto, onCerrar }: GestionUsuariosModal
 
   if (!abierto) return null
 
-  const inicial = (nombre: string, email: string): string => {
+  const inicial = (nombre: string, username: string): string => {
     const limpio = nombre.trim()
     if (limpio) {
       const partes = limpio.split(/\s+/)
       return ((partes[0]?.[0] ?? '') + (partes[1]?.[0] ?? '')).toUpperCase()
     }
-    return email.charAt(0).toUpperCase()
+    return (username || '?').charAt(0).toUpperCase()
   }
 
   return (
@@ -133,13 +141,28 @@ export function GestionUsuariosModal({ abierto, onCerrar }: GestionUsuariosModal
                   />
                 </label>
                 <label className="block">
-                  <span className="mb-1 block text-xs font-medium text-mm-gray-400">Correo *</span>
+                  <span className="mb-1 block text-xs font-medium text-mm-gray-400">Usuario *</span>
+                  <input
+                    type="text"
+                    className="input-dark"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="ana.garcia"
+                    autoCapitalize="off"
+                    autoCorrect="off"
+                    spellCheck={false}
+                  />
+                </label>
+                <label className="block sm:col-span-2">
+                  <span className="mb-1 block text-xs font-medium text-mm-gray-400">
+                    Correo de respaldo (opcional)
+                  </span>
                   <input
                     type="email"
                     className="input-dark"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="usuario@mundomotos.com"
+                    value={emailRespaldo}
+                    onChange={(e) => setEmailRespaldo(e.target.value)}
+                    placeholder="ana.garcia@correo.com"
                     autoCapitalize="off"
                     spellCheck={false}
                   />
@@ -224,13 +247,16 @@ export function GestionUsuariosModal({ abierto, onCerrar }: GestionUsuariosModal
                     className="flex items-center gap-3 rounded-lg border border-mm-gray-700 bg-mm-gray-900 p-3"
                   >
                     <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-mm-yellow text-sm font-bold text-mm-black">
-                      {inicial(usuario.nombre, usuario.email)}
+                      {inicial(usuario.nombre, usuario.username)}
                     </span>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold text-white">
-                        {usuario.nombre || usuario.email}
+                        {usuario.nombre || usuario.username}
                       </p>
-                      <p className="truncate text-xs text-mm-gray-400">{usuario.email}</p>
+                      <p className="truncate text-xs text-mm-gray-400">
+                        @{usuario.username}
+                        {usuario.emailRespaldo ? ` · ${usuario.emailRespaldo}` : ''}
+                      </p>
                     </div>
                     <span
                       className={`shrink-0 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${

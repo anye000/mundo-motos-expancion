@@ -23,11 +23,20 @@ function conTimeout<T>(promesa: Promise<T>, ms: number): Promise<T> {
 async function obtenerPerfil(userId: string): Promise<PerfilUsuario | null> {
   const { data } = await supabase
     .from('profiles')
-    .select('id, email, nombre, rol')
+    .select('id, email, nombre, rol, username, email_respaldo')
     .eq('id', userId)
     .maybeSingle()
   if (!data) return null
-  return data as PerfilUsuario
+  return { ...data, emailRespaldo: data.email_respaldo } as PerfilUsuario
+}
+
+/** Traduce un nombre de usuario al email real (consulta previa a la autenticación). */
+async function resolverEmailPorUsuario(usuario: string): Promise<string | null> {
+  const { data, error } = await supabase.rpc('resolver_email', {
+    p_username: usuario.trim().toLowerCase(),
+  })
+  if (error) return null
+  return (data as string) || null
 }
 
 interface AuthState {
@@ -82,20 +91,22 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     })
   },
 
-  login: async (email, password) => {
+  login: async (usuario, password) => {
     set({ cargando: true })
     try {
+      const email = await resolverEmailPorUsuario(usuario)
+      if (!email) throw new Error('Usuario o contraseña incorrectos')
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
+        email,
         password,
       })
       if (error) throw error
       if (!data.user) throw new Error('No se pudo iniciar sesión')
-      const usuario = await obtenerPerfil(data.user.id)
+      const perfil = await obtenerPerfil(data.user.id)
       localStorage.setItem('authToken', data.session.access_token)
       set({
-        usuario,
-        esAdmin: usuario?.rol === 'admin',
+        usuario: perfil,
+        esAdmin: perfil?.rol === 'admin',
         inicializado: true,
       })
     } finally {

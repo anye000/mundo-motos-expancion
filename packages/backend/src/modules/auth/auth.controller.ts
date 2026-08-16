@@ -30,14 +30,19 @@ export async function registrarUsuario(
   next: NextFunction
 ): Promise<void> {
   try {
-    const { email, password, nombre } = req.body ?? {};
-    if (!email || !password) {
-      throw new ApiError('El correo y la contraseña temporal son obligatorios', 400);
+    const { username, password, nombre, emailRespaldo } = req.body ?? {};
+    if (!username || !password) {
+      throw new ApiError('El usuario y la contraseña temporal son obligatorios', 400);
     }
     if (typeof password !== 'string' || password.length < 6) {
       throw new ApiError('La contraseña debe tener al menos 6 caracteres', 400);
     }
-    const usuario = await authService.crearUsuario({ email, password, nombre });
+    const usuario = await authService.crearUsuario({
+      username,
+      password,
+      nombre,
+      emailRespaldo,
+    });
     sendSuccess(res, usuario, 'Usuario creado', 201);
   } catch (error) {
     next(error);

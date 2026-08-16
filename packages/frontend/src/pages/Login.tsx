@@ -1,7 +1,7 @@
 import { FormEvent, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Bike, Loader2, LogIn, Lock, Mail } from 'lucide-react'
+import { Bike, Loader2, LogIn, Lock, User } from 'lucide-react'
 import { useAuthStore } from '@store/auth'
 
 interface EstadoUbicacion {
@@ -17,26 +17,26 @@ export function Login() {
   const navegar = useNavigate()
   const ubicacion = useLocation()
   const { login, cargando } = useAuthStore()
-  const [email, setEmail] = useState('')
+  const [usuario, setUsuario] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
 
   async function manejarEnvio(e: FormEvent) {
     e.preventDefault()
     setError(null)
-    if (!email.trim() || !password) {
-      setError('Ingresa tu correo y contraseña')
+    if (!usuario.trim() || !password) {
+      setError('Ingresa tu usuario y contraseña')
       return
     }
     try {
-      await login(email, password)
+      await login(usuario, password)
       toast.success('Sesión iniciada correctamente')
       const destino = (ubicacion.state as EstadoUbicacion | null)?.from?.pathname ?? '/'
       navegar(destino, { replace: true })
     } catch (err) {
       const mensaje =
         err instanceof Error
-          ? 'Credenciales inválidas o usuario inactivo'
+          ? 'Usuario o contraseña incorrectos'
           : 'No se pudo iniciar sesión'
       setError(mensaje)
     }
@@ -65,17 +65,18 @@ export function Login() {
           </h2>
 
           <label className="block">
-            <span className="mb-1 block text-sm font-medium text-mm-gray-300">Correo electrónico</span>
+            <span className="mb-1 block text-sm font-medium text-mm-gray-300">Usuario</span>
             <div className="relative">
-              <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-mm-gray-400" />
+              <User className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-mm-gray-400" />
               <input
-                type="email"
-                autoComplete="email"
+                type="text"
+                autoComplete="username"
                 className="input-dark pl-10"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@mundomotos.com"
+                value={usuario}
+                onChange={(e) => setUsuario(e.target.value)}
+                placeholder="tu.usuario"
                 autoCapitalize="off"
+                autoCorrect="off"
                 spellCheck={false}
               />
             </div>

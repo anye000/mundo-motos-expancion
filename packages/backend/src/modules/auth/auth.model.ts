@@ -13,10 +13,13 @@ export interface PerfilUsuario {
   email: string;
   nombre: string;
   rol: AuthRol;
+  username: string;
+  email_respaldo?: string | null;
 }
 
 export interface CrearUsuarioInput {
-  email: string;
+  username: string;
   password: string;
   nombre?: string;
+  emailRespaldo?: string;
 }
