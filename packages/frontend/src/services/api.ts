@@ -5,6 +5,7 @@ import {
   ConcesionarioFilters,
   CreateConcesionarioInput,
   UpdateConcesionarioInput,
+  HistorialEstado,
 } from '../types/concesionario'
 import { InteraccionCrm, CreateInteraccionInput } from '../types/interaccion'
 import { Usuario } from '../types/usuario'
@@ -180,6 +181,17 @@ class ApiService {
     if (!response.success) {
       throw new Error(response.error || 'Error al eliminar el concesionario')
     }
+  }
+
+  /** GET /api/v1/concesionarios/:id/historial-estados - historial de cambios de estado. */
+  async getHistorialEstados(concesionarioId: string): Promise<HistorialEstado[]> {
+    const response = await this.get<HistorialEstado[]>(
+      `/concesionarios/${concesionarioId}/historial-estados`
+    )
+    if (!response.success || !response.data) {
+      throw new Error(response.error || 'Error al obtener el historial de estados')
+    }
+    return response.data
   }
 
   /**

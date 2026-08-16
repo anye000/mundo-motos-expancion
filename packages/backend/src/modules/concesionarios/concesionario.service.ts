@@ -16,6 +16,7 @@ import {
   ConcesionarioFilters,
   PaginatedConcesionarios,
   EstadoOperativo,
+  HistorialEstado,
 } from './concesionario.model';
 import { sincronizarExpansion } from '../expansiones/expansion.service';
 
@@ -202,9 +203,7 @@ export async function updateConcesionario(
     throw new ApiError('El identificador del concesionario es requerido', 400);
   }
 
-  const updates: Partial<Record<keyof Concesionario, unknown>> = {
-    updated_at: new Date().toISOString(),
-  };
+  const updates: Partial<Record<keyof Concesionario, unknown>> = {};
 
   if (input.nombre !== undefined) {
     updates.nombre = validateRequiredString(input.nombre, 'nombre');
@@ -265,15 +264,17 @@ export async function updateConcesionario(
   }
 
   const { data, error } = await supabase
-    .from(TABLE)
-    .update(updates)
-    .eq('id', id)
-    .is('deleted_at', null)
-    .select()
-    .maybeSingle()
+    .rpc('actualizar_concesionario_con_historial', {
+      p_id: id,
+      p_updates: updates,
+    })
+    .single()
     .returns<Concesionario | null>();
 
   if (error) {
+    if (error.code === 'P0002') {
+      throw new ApiError('Concesionario no encontrado', 404);
+    }
     throw mapSupabaseError(error, 'Error al actualizar el concesionario');
   }
   if (!data) {
@@ -283,6 +284,27 @@ export async function updateConcesionario(
   const actualizado = data as Concesionario;
   await sincronizarExpansion(actualizado);
   return actualizado;
+}
+
+/** Obtiene el historial de cambios de estado de un concesionario (más reciente primero). */
+export async function getHistorialEstados(concesionarioId: string): Promise<HistorialEstado[]> {
+  if (!concesionarioId) {
+    throw new ApiError('El identificador del concesionario es requerido', 400);
+  }
+
+  const { data, error } = await supabase
+    .from('historial_estados')
+    .select('*')
+    .eq('concesionario_id', concesionarioId)
+    .order('created_at', { ascending: false })
+    .order('id', { ascending: false })
+    .returns<HistorialEstado[]>();
+
+  if (error) {
+    throw mapSupabaseError(error, 'Error al obtener el historial de estados');
+  }
+
+  return data ?? [];
 }
 
 /**

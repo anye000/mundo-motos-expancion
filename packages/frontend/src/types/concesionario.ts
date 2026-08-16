@@ -88,3 +88,12 @@ export interface Coordenadas {
   lat: number;
   lng: number;
 }
+
+/** Entrada del historial de cambios de estado de un concesionario. */
+export interface HistorialEstado {
+  id: string;
+  concesionario_id: string;
+  estado_anterior: EstadoOperativo | null;
+  estado_nuevo: EstadoOperativo;
+  created_at: string;
+}

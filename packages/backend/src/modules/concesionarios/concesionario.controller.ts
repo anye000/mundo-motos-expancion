@@ -112,3 +112,17 @@ export async function deleteConcesionario(
     next(error);
   }
 }
+
+/** GET /api/v1/concesionarios/:id/historial-estados - historial de cambios de estado. */
+export async function getHistorialEstados(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const historial = await concesionarioService.getHistorialEstados(req.params.id);
+    sendSuccess(res, historial, 'Historial de estados obtenido');
+  } catch (error) {
+    next(error);
+  }
+}

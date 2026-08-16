@@ -92,3 +92,12 @@ export interface PaginatedConcesionarios {
   page: number;
   limit: number;
 }
+
+/** Entrada del historial de estados de un concesionario. */
+export interface HistorialEstado {
+  id: string;
+  concesionario_id: string;
+  estado_anterior: EstadoOperativo | null;
+  estado_nuevo: EstadoOperativo;
+  created_at: string;
+}
