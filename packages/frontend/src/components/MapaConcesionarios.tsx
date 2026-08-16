@@ -6,7 +6,7 @@ import { BuscadorDireccion } from '@components/BuscadorDireccion'
 import { ResultadoGeocodificacion } from '@utils/geocodificacion'
 import { Concesionario, Coordenadas, EstadoOperativo } from '../types/concesionario'
 
-const CENTRO_COLOMBIA: [number, number] = [4.60971, -74.08175]
+const CENTRO_VENEZUELA: [number, number] = [6.5, -66.5]
 
 const ESTADO_LABEL: Record<EstadoOperativo, string> = {
   activo: 'Activo',
@@ -73,7 +73,7 @@ function AjustarVista({
       )
       map.fitBounds(bounds, { padding: [48, 48] })
     } else {
-      map.setView(CENTRO_COLOMBIA, 5)
+      map.setView(CENTRO_VENEZUELA, 5)
     }
   }, [concesionarios, seleccionado, map])
 
@@ -96,7 +96,7 @@ function BotonCentrarMapa({ concesionarios }: { concesionarios: Concesionario[] 
 
   function centrar() {
     if (concesionarios.length === 0) {
-      map.setView(CENTRO_COLOMBIA, 5)
+      map.setView(CENTRO_VENEZUELA, 5)
       return
     }
     const bounds = L.latLngBounds(
@@ -202,7 +202,7 @@ export function MapaConcesionarios({
 }: MapaConcesionariosProps) {
   return (
     <div className="relative z-0 h-full w-full">
-      <MapContainer center={CENTRO_COLOMBIA} zoom={5} scrollWheelZoom={false} className="h-full w-full">
+      <MapContainer center={CENTRO_VENEZUELA} zoom={5} scrollWheelZoom={false} className="h-full w-full">
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

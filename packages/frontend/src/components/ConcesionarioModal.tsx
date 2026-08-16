@@ -8,7 +8,7 @@ import { geocodificarInversa, ResultadoGeocodificacion } from '@utils/geocodific
 import { iconoConcesionario } from '@components/MapaConcesionarios'
 import { Concesionario, EstadoOperativo, TipoExpansion } from '../types/concesionario'
 
-const CENTRO_COLOMBIA: [number, number] = [4.60971, -74.08175]
+const CENTRO_VENEZUELA: [number, number] = [6.5, -66.5]
 
 interface FormConcesionario {
   nombre: string
@@ -430,7 +430,7 @@ export function ConcesionarioModal({
             </div>
             <div className="relative z-0 mt-3 h-64 w-full overflow-hidden rounded-lg border border-mm-gray-600">
               <MapContainer
-                center={CENTRO_COLOMBIA}
+                center={CENTRO_VENEZUELA}
                 zoom={5}
                 scrollWheelZoom={false}
                 className="h-full w-full"

@@ -34,10 +34,13 @@ function extraerDireccion(address: DireccionNominatim): string {
   return [address.house_number, address.road].filter(Boolean).join(' ');
 }
 
+/** Caja geográfica de Venezuela para acotar búsquedas al territorio nacional. */
+const VIEWBOX_VENEZUELA = '-73.40,12.20,-59.80,0.65';
+
 /**
  * Busca una dirección o ciudad en OpenStreetMap vía Nominatim.
- * Acotada a Colombia (`countrycodes=co`). Acepta un `AbortSignal` para cancelar
- * peticiones obsoletas desde el componente (debounce).
+ * Acotada a Venezuela (`countrycodes=ve` + `viewbox`). Acepta un `AbortSignal`
+ * para cancelar peticiones obsoletas desde el componente (debounce).
  */
 export async function buscarDireccion(
   consulta: string,
@@ -49,7 +52,9 @@ export async function buscarDireccion(
     format: 'jsonv2',
     addressdetails: '1',
     limit: '5',
-    countrycodes: 'co',
+    countrycodes: 've',
+    viewbox: VIEWBOX_VENEZUELA,
+    bounded: '1',
     'accept-language': 'es',
     q: consulta.trim(),
   });
