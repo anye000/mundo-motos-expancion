@@ -1,15 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 import {
-  addWeeks,
-  endOfISOWeek,
   endOfMonth,
   endOfYear,
   format,
   max,
   min,
   parseISO,
-  startOfISOWeek,
   startOfMonth,
   startOfYear,
 } from 'date-fns'
@@ -37,17 +34,14 @@ const ESTADO_EXPANSION_LABEL: Record<EstadoExpansion, string> = {
   completado: 'Completado',
 }
 
-const SEMANAS_2026 = Array.from({ length: 53 }, (_, i) => i + 1)
 const MESES_2026 = Array.from({ length: 12 }, (_, i) => i + 1)
-
-const INICIO_SEMANA_1_2026 = startOfISOWeek(new Date(2026, 0, 4))
 
 interface FiltrosReportes {
   concesionario_id: string
   estado: EstadoOperativo | ''
   ciudad: string
-  semanaDesde: string
-  semanaHasta: string
+  fechaDesde: string
+  fechaHasta: string
   mesDesde: string
   mesHasta: string
 }
@@ -56,8 +50,8 @@ const FILTROS_INICIALES: FiltrosReportes = {
   concesionario_id: '',
   estado: '',
   ciudad: '',
-  semanaDesde: '',
-  semanaHasta: '',
+  fechaDesde: '',
+  fechaHasta: '',
   mesDesde: '',
   mesHasta: '',
 }
@@ -67,16 +61,6 @@ type Pestana = 'interacciones' | 'aperturas' | 'rendimiento'
 interface ColumnaCSV {
   clave: string
   encabezado: string
-}
-
-function fechaDesdeSemana(semana: string): Date | null {
-  if (!semana) return null
-  return startOfISOWeek(addWeeks(INICIO_SEMANA_1_2026, Number(semana) - 1))
-}
-
-function fechaHastaSemana(semana: string): Date | null {
-  if (!semana) return null
-  return endOfISOWeek(addWeeks(INICIO_SEMANA_1_2026, Number(semana) - 1))
 }
 
 function TablaReporte({
@@ -149,16 +133,16 @@ export function ReportesView() {
   }, [])
 
   const limites = useMemo(() => {
-    const desdeSemana = fechaDesdeSemana(filtros.semanaDesde)
-    const hastaSemana = fechaHastaSemana(filtros.semanaHasta)
+    const desdeFecha = filtros.fechaDesde ? parseISO(filtros.fechaDesde) : null
+    const hastaFecha = filtros.fechaHasta ? parseISO(filtros.fechaHasta) : null
     const desdeMes = filtros.mesDesde
       ? startOfMonth(new Date(2026, Number(filtros.mesDesde) - 1, 1))
       : null
     const hastaMes = filtros.mesHasta
       ? endOfMonth(new Date(2026, Number(filtros.mesHasta) - 1, 1))
       : null
-    const candidatosDesde = [desdeSemana, desdeMes].filter((d): d is Date => d !== null)
-    const candidatosHasta = [hastaSemana, hastaMes].filter((d): d is Date => d !== null)
+    const candidatosDesde = [desdeFecha, desdeMes].filter((d): d is Date => d !== null)
+    const candidatosHasta = [hastaFecha, hastaMes].filter((d): d is Date => d !== null)
     let desdeFinal =
       candidatosDesde.length > 0 ? max(candidatosDesde) : startOfYear(new Date(2026, 0, 1))
     let hastaFinal =
@@ -172,7 +156,7 @@ export function ReportesView() {
       fecha_desde: format(desdeFinal, 'yyyy-MM-dd'),
       fecha_hasta: format(hastaFinal, 'yyyy-MM-dd'),
     }
-  }, [filtros.semanaDesde, filtros.semanaHasta, filtros.mesDesde, filtros.mesHasta])
+  }, [filtros.fechaDesde, filtros.fechaHasta, filtros.mesDesde, filtros.mesHasta])
 
   const filtrosApi = useMemo<ReporteFilters>(
     () => ({
@@ -385,33 +369,21 @@ export function ReportesView() {
               <span className="mb-1 block text-xs font-medium text-mm-gray-400">
                 Semana desde
               </span>
-              <select
-                className="input-dark"
-                value={filtros.semanaDesde}
-                onChange={(e) => cambiarFiltro('semanaDesde', e.target.value)}
-              >
-                <option value="">—</option>
-                {SEMANAS_2026.map((s) => (
-                  <option key={s} value={String(s)}>
-                    Semana {s}
-                  </option>
-                ))}
-              </select>
+              <input
+                type="date"
+                value={filtros.fechaDesde}
+                onChange={(e) => cambiarFiltro('fechaDesde', e.target.value)}
+                className="rounded-lg border border-mm-yellow/60 bg-black px-3 py-2 text-sm text-white outline-none transition-colors focus:border-mm-yellow [color-scheme:dark]"
+              />
             </label>
             <label className="block flex-1">
               <span className="mb-1 block text-xs font-medium text-mm-gray-400">Semana hasta</span>
-              <select
-                className="input-dark"
-                value={filtros.semanaHasta}
-                onChange={(e) => cambiarFiltro('semanaHasta', e.target.value)}
-              >
-                <option value="">—</option>
-                {SEMANAS_2026.map((s) => (
-                  <option key={s} value={String(s)}>
-                    Semana {s}
-                  </option>
-                ))}
-              </select>
+              <input
+                type="date"
+                value={filtros.fechaHasta}
+                onChange={(e) => cambiarFiltro('fechaHasta', e.target.value)}
+                className="rounded-lg border border-mm-yellow/60 bg-black px-3 py-2 text-sm text-white outline-none transition-colors focus:border-mm-yellow [color-scheme:dark]"
+              />
             </label>
           </div>
           <div className="flex items-end gap-2">
