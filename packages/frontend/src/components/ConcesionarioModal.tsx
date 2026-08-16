@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 're
 import { Loader2, Link2, MapPin, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { apiService } from '@services/api'
+import { ErrorBoundary } from '@components/ErrorBoundary'
 import { BuscadorDireccion } from '@components/BuscadorDireccion'
 import {
   geocodificarInversa,
@@ -78,6 +79,18 @@ function VolarAUbicacion({
   return null
 }
 
+/** Recuenta el tamaño del mapa tras montarse dentro del modal (evita mapa en blanco). */
+function AjustarTamanoModal() {
+  const map = useMap()
+
+  useEffect(() => {
+    const temporizador = setTimeout(() => map.invalidateSize(), 120)
+    return () => clearTimeout(temporizador)
+  }, [map])
+
+  return null
+}
+
 export interface ConcesionarioModalProps {
   abierto: boolean
   concesionario?: Concesionario | null
@@ -99,8 +112,8 @@ function aFormulario(concesionario: Concesionario): FormConcesionario {
     ciudad: concesionario.ciudad,
     departamento: concesionario.departamento,
     direccion: concesionario.direccion,
-    latitud: String(concesionario.latitud),
-    longitud: String(concesionario.longitud),
+    latitud: concesionario.latitud != null ? String(concesionario.latitud) : '',
+    longitud: concesionario.longitud != null ? String(concesionario.longitud) : '',
     estado: concesionario.estado,
     fecha_apertura_programada: concesionario.fecha_apertura_programada ?? '',
     tipo_expansion: concesionario.tipo_expansion,
@@ -504,50 +517,53 @@ export function ConcesionarioModal({
                 />
               </label>
             </div>
-            <div className="relative z-0 mt-3 h-64 w-full overflow-hidden rounded-lg border border-mm-gray-600">
-              <MapContainer
-                center={CENTRO_VENEZUELA}
-                zoom={5}
-                scrollWheelZoom={false}
-                maxBounds={BOUNDS_VENEZUELA}
-                maxBoundsViscosity={0.8}
-                className="h-full w-full"
-              >
-                <TileLayer
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                />
-                <ClicUbicacion onClic={fijarUbicacion} />
-                <BuscadorDireccion onSeleccionar={manejarResultadoBuscador} placeholder="Buscar dirección..." />
-                {ubicacion && (
-                  <Marker
-                    ref={marcadorRef}
-                    position={[ubicacion.lat, ubicacion.lng]}
-                    icon={iconoConcesionario('activo')}
-                    draggable
-                    eventHandlers={{
-                      dragstart: () => {
-                        arrastrandoRef.current = true
-                      },
-                      dragend: (e) => {
-                        arrastrandoRef.current = false
-                        const pos = (e.target as L.Marker).getLatLng()
-                        fijarUbicacion(pos.lat, pos.lng)
-                      },
-                    }}
-                  >
-                    <Popup>Ubicación seleccionada</Popup>
-                  </Marker>
-                )}
-                {ubicacion && (
-                  <VolarAUbicacion
-                    lat={ubicacion.lat}
-                    lng={ubicacion.lng}
-                    arrastrandoRef={arrastrandoRef}
+            <ErrorBoundary mensaje="No se pudo cargar el mapa. Puedes ingresar las coordenadas manualmente.">
+              <div className="relative z-0 mt-3 h-64 w-full overflow-hidden rounded-lg border border-mm-gray-600">
+                <MapContainer
+                  center={CENTRO_VENEZUELA}
+                  zoom={5}
+                  scrollWheelZoom={false}
+                  maxBounds={BOUNDS_VENEZUELA}
+                  maxBoundsViscosity={0.8}
+                  className="h-full w-full"
+                >
+                  <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                   />
-                )}
-              </MapContainer>
-            </div>
+                  <ClicUbicacion onClic={fijarUbicacion} />
+                  <AjustarTamanoModal />
+                  <BuscadorDireccion onSeleccionar={manejarResultadoBuscador} placeholder="Buscar dirección..." />
+                  {ubicacion && (
+                    <Marker
+                      ref={marcadorRef}
+                      position={[ubicacion.lat, ubicacion.lng]}
+                      icon={iconoConcesionario('activo')}
+                      draggable
+                      eventHandlers={{
+                        dragstart: () => {
+                          arrastrandoRef.current = true
+                        },
+                        dragend: (e) => {
+                          arrastrandoRef.current = false
+                          const pos = (e.target as L.Marker).getLatLng()
+                          fijarUbicacion(pos.lat, pos.lng)
+                        },
+                      }}
+                    >
+                      <Popup>Ubicación seleccionada</Popup>
+                    </Marker>
+                  )}
+                  {ubicacion && (
+                    <VolarAUbicacion
+                      lat={ubicacion.lat}
+                      lng={ubicacion.lng}
+                      arrastrandoRef={arrastrandoRef}
+                    />
+                  )}
+                </MapContainer>
+              </div>
+            </ErrorBoundary>
           </div>
 
           {error && (
