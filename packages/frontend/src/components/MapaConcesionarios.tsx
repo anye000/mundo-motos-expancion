@@ -3,11 +3,9 @@ import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 're
 import { LocateFixed } from 'lucide-react'
 import L from 'leaflet'
 import { BuscadorDireccion } from '@components/BuscadorDireccion'
-import { ResultadoGeocodificacion } from '@utils/geocodificacion'
+import { ResultadoGeocodificacion, BOUNDS_VENEZUELA, CENTRO_VENEZUELA } from '@utils/geocodificacion'
 import { Concesionario, Coordenadas, EstadoOperativo } from '../types/concesionario'
 import { ESTADO_LABEL } from '@utils/estadosConcesionario'
-
-const CENTRO_VENEZUELA: [number, number] = [6.5, -66.5]
 
 const COLORES_PIN: Record<
   EstadoOperativo,
@@ -197,7 +195,14 @@ export function MapaConcesionarios({
 }: MapaConcesionariosProps) {
   return (
     <div className="relative z-0 h-full w-full">
-      <MapContainer center={CENTRO_VENEZUELA} zoom={5} scrollWheelZoom={false} className="h-full w-full">
+      <MapContainer
+        center={CENTRO_VENEZUELA}
+        zoom={5}
+        scrollWheelZoom={false}
+        maxBounds={BOUNDS_VENEZUELA}
+        maxBoundsViscosity={0.8}
+        className="h-full w-full"
+      >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

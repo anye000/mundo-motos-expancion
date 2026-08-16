@@ -1,15 +1,19 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet'
-import { Loader2, MapPin, X } from 'lucide-react'
+import { Loader2, Link2, MapPin, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { apiService } from '@services/api'
 import { BuscadorDireccion } from '@components/BuscadorDireccion'
-import { geocodificarInversa, ResultadoGeocodificacion } from '@utils/geocodificacion'
+import {
+  geocodificarInversa,
+  ResultadoGeocodificacion,
+  BOUNDS_VENEZUELA,
+  CENTRO_VENEZUELA,
+} from '@utils/geocodificacion'
+import { resolverCoordenadasGoogleMaps } from '@utils/enlaceGoogleMaps'
 import { iconoConcesionario } from '@components/MapaConcesionarios'
 import { Concesionario, EstadoOperativo, TipoExpansion } from '../types/concesionario'
 import { ESTADO_LABEL, ORDEN_ESTADOS } from '@utils/estadosConcesionario'
-
-const CENTRO_VENEZUELA: [number, number] = [6.5, -66.5]
 
 interface FormConcesionario {
   nombre: string
@@ -113,6 +117,9 @@ export function ConcesionarioModal({
   const [error, setError] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
   const [geocodificando, setGeocodificando] = useState(false)
+  const [enlaceMaps, setEnlaceMaps] = useState('')
+  const [procesandoEnlace, setProcesandoEnlace] = useState(false)
+  const [errorEnlace, setErrorEnlace] = useState<string | null>(null)
   const arrastrandoRef = useRef(false)
   const marcadorRef = useRef<L.Marker | null>(null)
   const inversoRef = useRef<AbortController | null>(null)
@@ -122,6 +129,9 @@ export function ConcesionarioModal({
       setForm(concesionario ? aFormulario(concesionario) : FORM_INICIAL)
       setError(null)
       setGeocodificando(false)
+      setEnlaceMaps('')
+      setProcesandoEnlace(false)
+      setErrorEnlace(null)
     }
   }, [abierto, concesionario])
 
@@ -187,6 +197,37 @@ export function ConcesionarioModal({
       direccion: prev.direccion || resultado.direccion,
     }))
   }
+
+  /** Aplica coordenadas extraídas de un enlace de Google Maps al formulario. */
+  async function aplicarEnlaceGoogleMaps(enlace: string) {
+    const texto = enlace.trim()
+    if (!texto) return
+    setProcesandoEnlace(true)
+    setErrorEnlace(null)
+    const coords = await resolverCoordenadasGoogleMaps(texto)
+    setProcesandoEnlace(false)
+    if (!coords) {
+      setErrorEnlace(
+        'No se pudieron extraer coordenadas. Pega la URL larga de Google Maps (con @lat,lng) o ingrésalas manualmente.'
+      )
+      return
+    }
+    fijarUbicacion(coords.lat, coords.lng)
+  }
+
+  // Auto-detección al pegar/escribir un enlace de Google Maps (debounce).
+  useEffect(() => {
+    const texto = enlaceMaps.trim()
+    if (!texto || !/^https?:\/\//i.test(texto)) {
+      setErrorEnlace(null)
+      return
+    }
+    const temporizador = setTimeout(() => {
+      void aplicarEnlaceGoogleMaps(texto)
+    }, 600)
+    return () => clearTimeout(temporizador)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enlaceMaps])
 
   async function manejarEnvio(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -323,7 +364,7 @@ export function ConcesionarioModal({
                 className="input-dark"
                 value={form.telefono}
                 onChange={(e) => actualizar('telefono', e.target.value)}
-                placeholder="+57 1 234 5678"
+                placeholder="+58 212 555 0123"
               />
             </label>
             <label className="block">
@@ -377,7 +418,7 @@ export function ConcesionarioModal({
                 className="input-dark"
                 value={form.ciudad}
                 onChange={(e) => actualizar('ciudad', e.target.value)}
-                placeholder="Bogotá"
+                placeholder="Caracas"
               />
             </label>
             <label className="block">
@@ -386,7 +427,7 @@ export function ConcesionarioModal({
                 className="input-dark"
                 value={form.departamento}
                 onChange={(e) => actualizar('departamento', e.target.value)}
-                placeholder="Cundinamarca"
+                placeholder="Distrito Capital"
               />
             </label>
             <label className="block sm:col-span-2">
@@ -395,7 +436,7 @@ export function ConcesionarioModal({
                 className="input-dark"
                 value={form.direccion}
                 onChange={(e) => actualizar('direccion', e.target.value)}
-                placeholder="Av. 68 # 22-10"
+                placeholder="Av. Francisco de Miranda, Chacao"
               />
             </label>
           </div>
@@ -410,6 +451,35 @@ export function ConcesionarioModal({
                 Detectando dirección...
               </span>
             )}
+            <div className="mb-3">
+              <label className="block">
+                <span className="mb-1 flex items-center gap-1 text-sm font-medium text-mm-gray-300">
+                  <Link2 className="h-4 w-4 text-mm-yellow" />
+                  Enlace de Google Maps (GPS)
+                </span>
+                <input
+                  className="input-dark"
+                  value={enlaceMaps}
+                  onChange={(e) => setEnlaceMaps(e.target.value)}
+                  placeholder="https://maps.app.goo.gl/... o https://www.google.com/maps/@lat,lng"
+                  autoComplete="off"
+                  autoCapitalize="off"
+                  spellCheck={false}
+                />
+              </label>
+              <p className="mt-1 text-xs text-mm-gray-500">
+                Pega un enlace de Google Maps (corto o largo) para extraer automáticamente la latitud y la longitud.
+              </p>
+              {procesandoEnlace && (
+                <span className="mt-1 flex items-center gap-1 text-xs text-mm-yellow">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  Analizando enlace...
+                </span>
+              )}
+              {errorEnlace && (
+                <span className="mt-1 block text-xs text-mm-error">{errorEnlace}</span>
+              )}
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <label className="block">
                 <span className="mb-1 block text-xs text-mm-gray-400">Latitud</span>
@@ -419,7 +489,7 @@ export function ConcesionarioModal({
                   className="input-dark"
                   value={form.latitud}
                   onChange={(e) => actualizar('latitud', e.target.value)}
-                  placeholder="4.60971"
+                  placeholder="10.48059"
                 />
               </label>
               <label className="block">
@@ -430,7 +500,7 @@ export function ConcesionarioModal({
                   className="input-dark"
                   value={form.longitud}
                   onChange={(e) => actualizar('longitud', e.target.value)}
-                  placeholder="-74.08175"
+                  placeholder="-66.90360"
                 />
               </label>
             </div>
@@ -439,6 +509,8 @@ export function ConcesionarioModal({
                 center={CENTRO_VENEZUELA}
                 zoom={5}
                 scrollWheelZoom={false}
+                maxBounds={BOUNDS_VENEZUELA}
+                maxBoundsViscosity={0.8}
                 className="h-full w-full"
               >
                 <TileLayer

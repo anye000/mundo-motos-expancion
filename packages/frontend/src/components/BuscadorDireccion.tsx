@@ -10,12 +10,13 @@ export interface BuscadorDireccionProps {
 
 /**
  * Buscador de direcciones estilo Google Maps sobre el mapa. Debounce de 400 ms,
- * resultados de Nominatim (Colombia), flyTo automático al seleccionar y callback
- * para que el padre (dashboard o modal) procese la ubicación elegida.
+ * resultados de Nominatim (Venezuela, `countrycodes=ve`), flyTo automático al
+ * seleccionar y callback para que el padre (dashboard o modal) procese la
+ * ubicación elegida.
  */
 export function BuscadorDireccion({
   onSeleccionar,
-  placeholder = 'Buscar dirección o ciudad...',
+  placeholder = 'Buscar ciudad en Venezuela...',
 }: BuscadorDireccionProps) {
   const map = useMap()
   const [consulta, setConsulta] = useState('')

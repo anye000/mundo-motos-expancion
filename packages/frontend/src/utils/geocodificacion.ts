@@ -38,6 +38,18 @@ function extraerDireccion(address: DireccionNominatim): string {
 const VIEWBOX_VENEZUELA = '-73.40,12.20,-59.80,0.65';
 
 /**
+ * Límites geográficos de Venezuela (suroeste → noreste) para restringir el
+ * panning del mapa y las búsquedas exclusivamente al territorio nacional.
+ */
+export const BOUNDS_VENEZUELA: [[number, number], [number, number]] = [
+  [0.65, -73.4],
+  [12.2, -59.8],
+];
+
+/** Centro predeterminado del mapa: Caracas (coordenadas nacionales). */
+export const CENTRO_VENEZUELA: [number, number] = [10.4806, -66.9036];
+
+/**
  * Busca una dirección o ciudad en OpenStreetMap vía Nominatim.
  * Acotada a Venezuela (`countrycodes=ve` + `viewbox`). Acepta un `AbortSignal`
  * para cancelar peticiones obsoletas desde el componente (debounce).

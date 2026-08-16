@@ -2,7 +2,7 @@
 --
 -- Añade campos estructurados al módulo de expansiones (src/modules/expansiones):
 --   - tipo: tipo de apertura (apertura, ampliacion, relocalizacion, otro).
---   - ciudad / departamento: ubicación estructurada (Colombia).
+--   - ciudad / departamento: ubicación estructurada (Venezuela).
 --
 -- La columna `locacion` se conserva y el backend la compone como
 -- "Ciudad, Departamento" (Enfoque A). Los DEFAULT permiten que las filas
