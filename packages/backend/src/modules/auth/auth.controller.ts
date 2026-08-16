@@ -1,0 +1,45 @@
+/**
+ * Controlador del módulo Auth.
+ *
+ * Capa HTTP: valida la entrada, delega en el servicio y responde con los
+ * helpers de @utils/helpers. Los errores se propagan al handler global.
+ */
+
+import { Request, Response, NextFunction } from 'express';
+import { sendSuccess, ApiError } from '@utils/helpers';
+import * as authService from './auth.service';
+
+/** GET /api/v1/auth/usuarios - lista los accesos creados (admin). */
+export async function listarUsuarios(
+  _req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const usuarios = await authService.listarUsuarios();
+    sendSuccess(res, usuarios, 'Usuarios obtenidos');
+  } catch (error) {
+    next(error);
+  }
+}
+
+/** POST /api/v1/auth/registrar - crea un acceso de solo lectura (admin). */
+export async function registrarUsuario(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const { email, password, nombre } = req.body ?? {};
+    if (!email || !password) {
+      throw new ApiError('El correo y la contraseña temporal son obligatorios', 400);
+    }
+    if (typeof password !== 'string' || password.length < 6) {
+      throw new ApiError('La contraseña debe tener al menos 6 caracteres', 400);
+    }
+    const usuario = await authService.crearUsuario({ email, password, nombre });
+    sendSuccess(res, usuario, 'Usuario creado', 201);
+  } catch (error) {
+    next(error);
+  }
+}

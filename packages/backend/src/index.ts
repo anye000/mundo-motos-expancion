@@ -9,6 +9,7 @@ import crmRouter from './modules/crm/crm.routes'
 import usersRouter from './modules/users/user.routes'
 import expansionesRouter from './modules/expansiones/expansion.routes'
 import reportesRouter from './modules/reportes/reporte.routes'
+import authRouter from './modules/auth/auth.routes'
 
 // Cargar variables de entorno
 dotenv.config()
@@ -51,6 +52,7 @@ app.use('/api/v1/crm', crmRouter)
 app.use('/api/v1/users', usersRouter)
 app.use('/api/v1/expansiones', expansionesRouter)
 app.use('/api/v1/reportes', reportesRouter)
+app.use('/api/v1/auth', authRouter)
 
 // API raíz (placeholder informativo)
 app.use('/api/v1', (_req: Request, res: Response) => {

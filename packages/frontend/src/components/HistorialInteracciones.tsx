@@ -5,6 +5,7 @@ import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { apiService } from '@services/api'
 import { useInteracciones } from '@hooks/useInteracciones'
+import { useAuthStore } from '@store/auth'
 import { TipoInteraccion } from '../types/interaccion'
 import { Usuario } from '../types/usuario'
 
@@ -29,6 +30,7 @@ export interface HistorialInteraccionesProps {
  * responsable y detalles) + listado cronológico de las interacciones.
  */
 export function HistorialInteracciones({ concesionarioId }: HistorialInteraccionesProps) {
+  const esAdmin = useAuthStore((s) => s.esAdmin)
   const { interacciones, cargando, error, recargar } = useInteracciones(concesionarioId)
   const [usuarios, setUsuarios] = useState<Usuario[]>([])
   const [errorUsuarios, setErrorUsuarios] = useState<string | null>(null)
@@ -95,10 +97,11 @@ export function HistorialInteracciones({ concesionarioId }: HistorialInteraccion
       </h3>
 
       {/* Formulario rápido */}
-      <form
-        onSubmit={guardar}
-        className="flex flex-col gap-3 rounded-lg border border-mm-gray-700 bg-mm-gray-900 p-4"
-      >
+      {esAdmin && (
+        <form
+          onSubmit={guardar}
+          className="flex flex-col gap-3 rounded-lg border border-mm-gray-700 bg-mm-gray-900 p-4"
+        >
         <p className="flex items-center gap-2 text-xs font-semibold text-mm-yellow">
           <MessageSquarePlus className="h-4 w-4" />
           Nueva interacción
@@ -156,7 +159,8 @@ export function HistorialInteracciones({ concesionarioId }: HistorialInteraccion
             {enviando ? 'Registrando...' : 'Registrar interacción'}
           </button>
         </div>
-      </form>
+        </form>
+      )}
 
       {/* Listado */}
       {error && (

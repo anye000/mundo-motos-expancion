@@ -16,6 +16,7 @@ import {
   UpdateExpansionInput,
 } from '../types/expansion'
 import { ReporteData, ReporteFilters } from '../types/reporte'
+import { PerfilUsuario, CrearUsuarioInput } from '../types/auth'
 
 class ApiService {
   private client: AxiosInstance
@@ -281,6 +282,24 @@ class ApiService {
     const response = await this.get<ReporteData>('/reportes', { params: filters })
     if (!response.success || !response.data) {
       throw new Error(response.error || 'Error al obtener el reporte')
+    }
+    return response.data
+  }
+
+  /** GET /api/v1/auth/usuarios - lista de accesos (roles) creados (admin). */
+  async getAuthUsuarios(): Promise<PerfilUsuario[]> {
+    const response = await this.get<PerfilUsuario[]>('/auth/usuarios')
+    if (!response.success || !response.data) {
+      throw new Error(response.error || 'Error al obtener los usuarios de acceso')
+    }
+    return response.data
+  }
+
+  /** POST /api/v1/auth/registrar - crea un acceso de solo lectura (admin). */
+  async registrarUsuario(input: CrearUsuarioInput): Promise<PerfilUsuario> {
+    const response = await this.post<PerfilUsuario>('/auth/registrar', input)
+    if (!response.success || !response.data) {
+      throw new Error(response.error || 'Error al crear el usuario')
     }
     return response.data
   }

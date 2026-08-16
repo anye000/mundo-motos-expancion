@@ -12,6 +12,7 @@ import {
   XCircle,
 } from 'lucide-react'
 import { useConcesionarios } from '@hooks/useConcesionarios'
+import { useAuthStore } from '@store/auth'
 import { apiService } from '@services/api'
 import { MapaConcesionarios } from '@components/MapaConcesionarios'
 import { ConcesionarioModal } from '@components/ConcesionarioModal'
@@ -43,6 +44,7 @@ export function DashboardConcesionarios() {
     departamentos,
     recargar,
   } = useConcesionarios()
+  const esAdmin = useAuthStore((s) => s.esAdmin)
   const [seleccionado, setSeleccionado] = useState<Concesionario | null>(null)
   const [modalAbierto, setModalAbierto] = useState(false)
   const [editando, setEditando] = useState<Concesionario | null>(null)
@@ -146,7 +148,7 @@ export function DashboardConcesionarios() {
             concesionarios={concesionarios}
             seleccionado={seleccionado}
             onSeleccionar={seleccionar}
-            onEditar={abrirEdicion}
+            onEditar={esAdmin ? abrirEdicion : undefined}
             onGestionar={(c) => setDetalle(c)}
           />
           {cargando && (
@@ -234,14 +236,16 @@ export function DashboardConcesionarios() {
                   {concesionarios.length}
                 </span>
               </h3>
-              <button
-                type="button"
-                onClick={() => setModalAbierto(true)}
-                className="flex items-center gap-1 rounded-lg bg-mm-yellow px-3 py-1.5 text-xs font-bold text-mm-black hover:bg-mm-yellow-dark transition-colors"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                Nuevo
-              </button>
+              {esAdmin && (
+                <button
+                  type="button"
+                  onClick={() => setModalAbierto(true)}
+                  className="flex items-center gap-1 rounded-lg bg-mm-yellow px-3 py-1.5 text-xs font-bold text-mm-black hover:bg-mm-yellow-dark transition-colors"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Nuevo
+                </button>
+              )}
             </div>
 
             {concesionarios.length === 0 && !cargando ? (
@@ -277,30 +281,34 @@ export function DashboardConcesionarios() {
                           </p>
                         </button>
                         <div className="flex shrink-0 items-center gap-1">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              abrirEdicion(concesionario)
-                            }}
-                            className="rounded-lg border border-mm-gray-600 p-1.5 text-mm-yellow hover:bg-mm-yellow hover:text-mm-black transition-colors"
-                            aria-label={`Editar ${concesionario.nombre}`}
-                            title="Editar"
-                          >
-                            <Pencil className="h-3.5 w-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setEliminar(concesionario)
-                            }}
-                            className="rounded-lg border border-mm-gray-600 p-1.5 text-mm-error hover:bg-mm-error hover:text-white transition-colors"
-                            aria-label={`Eliminar ${concesionario.nombre}`}
-                            title="Eliminar"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
+                          {esAdmin && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                abrirEdicion(concesionario)
+                              }}
+                              className="rounded-lg border border-mm-gray-600 p-1.5 text-mm-yellow hover:bg-mm-yellow hover:text-mm-black transition-colors"
+                              aria-label={`Editar ${concesionario.nombre}`}
+                              title="Editar"
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+                          {esAdmin && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setEliminar(concesionario)
+                              }}
+                              className="rounded-lg border border-mm-gray-600 p-1.5 text-mm-error hover:bg-mm-error hover:text-white transition-colors"
+                              aria-label={`Eliminar ${concesionario.nombre}`}
+                              title="Eliminar"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          )}
                         </div>
                       </div>
                     </li>

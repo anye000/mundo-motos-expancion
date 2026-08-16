@@ -25,6 +25,7 @@ import {
   TrendingUp,
 } from 'lucide-react'
 import { useExpansiones } from '@hooks/useExpansiones'
+import { useAuthStore } from '@store/auth'
 import { ExpansionModal } from './ExpansionModal'
 import { EstadoExpansion, Expansion } from '../types/expansion'
 
@@ -83,6 +84,7 @@ function BadgeEstado({ estado }: { estado: EstadoExpansion }) {
 
 export function CronogramaExpansions() {
   const { expansiones, cargando, error, recargar, crear } = useExpansiones()
+  const esAdmin = useAuthStore((s) => s.esAdmin)
   const [mesVisible, setMesVisible] = useState(() => new Date())
   const [diaSeleccionado, setDiaSeleccionado] = useState<string | null>(null)
   const [modalAbierto, setModalAbierto] = useState(false)
@@ -143,14 +145,16 @@ export function CronogramaExpansions() {
           Cronograma de Expansión
         </h2>
         <div className="flex flex-wrap items-center justify-end gap-2">
-          <button
-            type="button"
-            onClick={() => setModalAbierto(true)}
-            className="flex items-center gap-1.5 rounded-lg bg-mm-yellow px-3.5 py-2 text-xs font-bold text-mm-black hover:bg-mm-yellow-dark transition-colors"
-          >
-            <Plus className="h-4 w-4" />
-            Nueva Expansión
-          </button>
+          {esAdmin && (
+            <button
+              type="button"
+              onClick={() => setModalAbierto(true)}
+              className="flex items-center gap-1.5 rounded-lg bg-mm-yellow px-3.5 py-2 text-xs font-bold text-mm-black hover:bg-mm-yellow-dark transition-colors"
+            >
+              <Plus className="h-4 w-4" />
+              Nueva Expansión
+            </button>
+          )}
           <button
             type="button"
             onClick={() => {
