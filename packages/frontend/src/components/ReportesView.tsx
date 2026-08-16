@@ -20,6 +20,7 @@ import { EstadoExpansion } from '../types/expansion'
 import { TipoInteraccion } from '../types/interaccion'
 import { Usuario } from '../types/usuario'
 import { ReporteFilters } from '../types/reporte'
+import { ESTADO_LABEL, ORDEN_ESTADOS } from '@utils/estadosConcesionario'
 
 const TIPO_INTERACCION_LABEL: Record<TipoInteraccion, string> = {
   llamada: 'Llamada',
@@ -189,7 +190,8 @@ export function ReportesView() {
         tipo: TIPO_INTERACCION_LABEL[i.tipo],
         concesionario_nombre: i.concesionario_nombre,
         concesionario_ciudad: i.concesionario_ciudad,
-        concesionario_estado: i.concesionario_estado,
+        concesionario_estado:
+          ESTADO_LABEL[i.concesionario_estado as EstadoOperativo] ?? i.concesionario_estado,
         detalles: i.detalles,
         responsable: nombreResponsable(i.usuario_responsable),
       })),
@@ -215,7 +217,7 @@ export function ReportesView() {
         nombre: r.nombre,
         ciudad: r.ciudad,
         departamento: r.departamento,
-        estado: r.estado,
+        estado: ESTADO_LABEL[r.estado as EstadoOperativo] ?? r.estado,
         total_interacciones: r.total_interacciones,
         ultima_interaccion: r.ultima_interaccion
           ? format(new Date(r.ultima_interaccion), 'dd/MM/yyyy HH:mm')
@@ -345,8 +347,11 @@ export function ReportesView() {
               onChange={(e) => cambiarFiltro('estado', e.target.value)}
             >
               <option value="">Todos</option>
-              <option value="activo">Activos</option>
-              <option value="inactivo">Inactivos</option>
+              {ORDEN_ESTADOS.map((estado) => (
+                <option key={estado} value={estado}>
+                  {ESTADO_LABEL[estado]}
+                </option>
+              ))}
             </select>
           </label>
           <label className="block">

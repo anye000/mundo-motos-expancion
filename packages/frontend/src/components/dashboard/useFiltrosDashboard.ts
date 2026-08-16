@@ -1,11 +1,12 @@
 import { useCallback, useMemo, useState } from 'react'
 import { parseISO } from 'date-fns'
-import { Concesionario } from '../../types/concesionario'
+import { Concesionario, EstadoOperativo } from '../../types/concesionario'
 import { Expansion } from '../../types/expansion'
 import { agruparPorPeriodo, clavePeriodo, DatosBarra } from './formateo'
 import { calcularKpis, datosPieEstado, DatosPie, KpisDashboard } from './kpis'
+import { ORDEN_ESTADOS } from '@utils/estadosConcesionario'
 
-export type EstadoFiltro = 'activo' | 'inactivo' | null
+export type EstadoFiltro = EstadoOperativo | null
 
 export interface FiltrosDashboard {
   desde: Date | null
@@ -144,7 +145,7 @@ export function useFiltrosDashboard(
   const seleccionarEstado = useCallback((estado: string | null) => {
     setFiltros((prev) => ({
       ...prev,
-      estado: estado === 'activo' || estado === 'inactivo' ? estado : null,
+      estado: estado && (ORDEN_ESTADOS as string[]).includes(estado) ? (estado as EstadoOperativo) : null,
     }))
   }, [])
 

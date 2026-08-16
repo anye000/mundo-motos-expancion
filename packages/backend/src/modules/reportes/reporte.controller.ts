@@ -12,7 +12,15 @@ import * as reporteService from './reporte.service';
 import { ReporteFilters } from './reporte.model';
 import { EstadoOperativo } from '../concesionarios/concesionario.model';
 
-const ESTADOS_VALIDOS: EstadoOperativo[] = ['activo', 'inactivo'];
+const ESTADOS_VALIDOS: EstadoOperativo[] = [
+  'en_negociacion',
+  'proximo',
+  'en_ejecucion',
+  'activo',
+  'inactivo',
+  'rechazado',
+  'completado',
+];
 
 function queryString(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim() !== '' ? value.trim() : undefined;

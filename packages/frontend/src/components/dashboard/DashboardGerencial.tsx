@@ -138,9 +138,9 @@ export function DashboardGerencial() {
       {/* Big Number Cards */}
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <BigNumberCard
-          etiqueta="Total red"
+          etiqueta="Total concesionarios"
           valor={concesionariosFiltrados.length}
-          detalle={`${kpis.departamentos} departamentos cubiertos`}
+          detalle={`${kpis.activos} concesionarios activos`}
           icono={Building2}
         />
         <BigNumberCard
@@ -167,13 +167,13 @@ export function DashboardGerencial() {
         <KpiCard
           etiqueta="Total concesionarios"
           valor={kpis.total}
-          detalle={`${kpis.departamentos} departamentos cubiertos`}
+          detalle={`${kpis.inactivos} concesionarios inactivos`}
           icono={Building2}
         />
         <KpiCard
           etiqueta="Activos"
           valor={kpis.activos}
-          detalle={`${kpis.porcentajeActivos}% de la red`}
+          detalle={`${kpis.porcentajeActivos}% de los concesionarios`}
           icono={CheckCircle2}
         />
         <KpiCard etiqueta="Inactivos" valor={kpis.inactivos} icono={XCircle} />
@@ -260,7 +260,7 @@ export function DashboardGerencial() {
 
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className="rounded-2xl border border-mm-yellow/60 bg-black p-5 shadow-[0_0_28px_rgba(255,204,0,0.14)]">
-          <h3 className="mb-1 text-sm font-bold text-white">Estado operativo de la red</h3>
+          <h3 className="mb-1 text-sm font-bold text-white">Estado operativo de los concesionarios</h3>
           <p className="mb-4 text-xs text-mm-gray-400">
             Distribución de concesionarios por estado operativo. Haz clic para filtrar.
           </p>
@@ -345,7 +345,7 @@ export function DashboardGerencial() {
 
           <div className="rounded-lg border border-mm-gray-800 bg-mm-gray-800/50 p-3">
             <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-mm-gray-400">
-              Estado de la red
+              Estado de los concesionarios
             </p>
             <div className="mb-2 flex items-center justify-between text-sm">
               <span className="text-mm-gray-200">

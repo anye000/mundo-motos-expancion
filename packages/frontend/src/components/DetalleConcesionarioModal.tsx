@@ -3,6 +3,7 @@ import { Building2, History, Mail, MapPin, MessagesSquare, Phone, X } from 'luci
 import { Concesionario } from '../types/concesionario'
 import { HistorialInteracciones } from '@components/HistorialInteracciones'
 import { HistorialEstados } from '@components/HistorialEstados'
+import { ESTADO_BADGE, ESTADO_LABEL } from '@utils/estadosConcesionario'
 
 export interface DetalleConcesionarioModalProps {
   concesionario: Concesionario | null
@@ -80,27 +81,9 @@ export function DetalleConcesionarioModal({
               <div>
                 <p className="text-xs font-medium text-mm-gray-400">Estado operativo</p>
                 <span
-                  className={`mt-1 inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${
-                    concesionario.estado === 'activo'
-                      ? 'bg-mm-success/15 text-mm-success border-mm-success/30'
-                      : concesionario.estado === 'inactivo'
-                        ? 'bg-mm-error/15 text-mm-error border-mm-error/30'
-                        : concesionario.estado === 'proximo'
-                          ? 'bg-mm-yellow/15 text-mm-yellow border-mm-yellow/30'
-                          : concesionario.estado === 'en_ejecucion'
-                            ? 'bg-mm-warning/15 text-mm-warning border-mm-warning/30'
-                            : 'bg-mm-success/15 text-mm-success border-mm-success/30'
-                  }`}
+                  className={`mt-1 inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${ESTADO_BADGE[concesionario.estado]}`}
                 >
-                  {concesionario.estado === 'activo'
-                    ? 'Activo'
-                    : concesionario.estado === 'inactivo'
-                      ? 'Inactivo'
-                      : concesionario.estado === 'proximo'
-                        ? 'Próximo'
-                        : concesionario.estado === 'en_ejecucion'
-                          ? 'En ejecución'
-                          : 'Completado'}
+                  {ESTADO_LABEL[concesionario.estado]}
                 </span>
               </div>
               <div>

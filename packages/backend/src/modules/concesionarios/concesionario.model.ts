@@ -7,10 +7,12 @@
  */
 
 export type EstadoOperativo =
-  | 'activo'
-  | 'inactivo'
+  | 'en_negociacion'
   | 'proximo'
   | 'en_ejecucion'
+  | 'activo'
+  | 'inactivo'
+  | 'rechazado'
   | 'completado';
 
 export type TipoExpansion = 'apertura' | 'ampliacion' | 'relocalizacion' | 'otro';

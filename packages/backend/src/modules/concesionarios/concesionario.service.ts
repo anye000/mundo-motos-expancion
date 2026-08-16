@@ -22,10 +22,12 @@ import { sincronizarExpansion } from '../expansiones/expansion.service';
 
 const TABLE = 'concesionarios';
 const ESTADOS_VALIDOS: EstadoOperativo[] = [
-  'activo',
-  'inactivo',
+  'en_negociacion',
   'proximo',
   'en_ejecucion',
+  'activo',
+  'inactivo',
+  'rechazado',
   'completado',
 ];
 const TIPOS_EXPANSION_VALIDOS = ['apertura', 'ampliacion', 'relocalizacion', 'otro'] as const;

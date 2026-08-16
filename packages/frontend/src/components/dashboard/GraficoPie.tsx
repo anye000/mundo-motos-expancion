@@ -38,19 +38,19 @@ export const GraficoPie = memo(function GraficoPie({ datos, activo, onSelecciona
             strokeWidth={2}
             className="cursor-pointer"
             onClick={(entrada: unknown) => {
-              const nombre = (entrada as { name?: string } | null)?.name
-              onSeleccionar(nombre === activo ? null : nombre ?? null)
+              const clave = (entrada as { clave?: string } | null)?.clave
+              onSeleccionar(clave === activo ? null : clave ?? null)
             }}
           >
             {datos.map((d) => (
               <Cell
-                key={d.name}
+                key={d.clave}
                 fill={d.color}
-                opacity={activo && activo !== d.name ? 0.4 : 1}
+                opacity={activo && activo !== d.clave ? 0.4 : 1}
                 style={{
                   cursor: 'pointer',
                   outline: 'none',
-                  filter: activo === d.name ? 'drop-shadow(0 0 8px rgba(255, 204, 0, 0.5))' : undefined,
+                  filter: activo === d.clave ? 'drop-shadow(0 0 8px rgba(255, 204, 0, 0.5))' : undefined,
                 }}
               />
             ))}
@@ -60,12 +60,12 @@ export const GraficoPie = memo(function GraficoPie({ datos, activo, onSelecciona
       </ResponsiveContainer>
       <ul className="mt-3 flex flex-col gap-1.5">
         {datos.map((d) => {
-          const seleccionado = activo === d.name
+          const seleccionado = activo === d.clave
           return (
-            <li key={d.name}>
+            <li key={d.clave}>
               <button
                 type="button"
-                onClick={() => onSeleccionar(seleccionado ? null : d.name)}
+                onClick={() => onSeleccionar(seleccionado ? null : d.clave)}
                 className={`flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-1.5 text-sm transition-colors ${
                   seleccionado
                     ? 'border-mm-yellow/70 bg-mm-yellow/10'

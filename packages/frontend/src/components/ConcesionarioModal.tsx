@@ -7,6 +7,7 @@ import { BuscadorDireccion } from '@components/BuscadorDireccion'
 import { geocodificarInversa, ResultadoGeocodificacion } from '@utils/geocodificacion'
 import { iconoConcesionario } from '@components/MapaConcesionarios'
 import { Concesionario, EstadoOperativo, TipoExpansion } from '../types/concesionario'
+import { ESTADO_LABEL, ORDEN_ESTADOS } from '@utils/estadosConcesionario'
 
 const CENTRO_VENEZUELA: [number, number] = [6.5, -66.5]
 
@@ -328,11 +329,12 @@ export function ConcesionarioModal({
                 value={form.estado}
                 onChange={(e) => actualizar('estado', e.target.value)}
               >
-                <option value="activo">Activo</option>
-                <option value="inactivo">Inactivo</option>
-                <option value="proximo">Próximo</option>
-                <option value="en_ejecucion">En ejecución</option>
-                <option value="completado">Completado</option>
+                <option value="">Selecciona un estado</option>
+                {ORDEN_ESTADOS.map((estado) => (
+                  <option key={estado} value={estado}>
+                    {ESTADO_LABEL[estado]}
+                  </option>
+                ))}
               </select>
             </label>
             {esEstadoExpansion(form.estado) && (

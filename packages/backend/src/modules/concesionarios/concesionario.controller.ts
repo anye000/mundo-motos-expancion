@@ -12,10 +12,12 @@ import * as concesionarioService from './concesionario.service';
 import { ConcesionarioFilters, EstadoOperativo } from './concesionario.model';
 
 const ESTADOS_VALIDOS: EstadoOperativo[] = [
-  'activo',
-  'inactivo',
+  'en_negociacion',
   'proximo',
   'en_ejecucion',
+  'activo',
+  'inactivo',
+  'rechazado',
   'completado',
 ];
 

@@ -3,15 +3,8 @@ import { History, Loader2, RefreshCw } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { apiService } from '@services/api'
-import { EstadoOperativo, HistorialEstado } from '../types/concesionario'
-
-const ESTADO_LABEL: Record<EstadoOperativo, string> = {
-  activo: 'Activo',
-  inactivo: 'Inactivo',
-  proximo: 'Próximo',
-  en_ejecucion: 'En ejecución',
-  completado: 'Completado',
-}
+import { HistorialEstado } from '../types/concesionario'
+import { ESTADO_LABEL } from '@utils/estadosConcesionario'
 
 export interface HistorialEstadosProps {
   concesionarioId: string

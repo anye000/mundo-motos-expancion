@@ -1,9 +1,10 @@
 import { parseISO, startOfDay } from 'date-fns'
-import { COLOR_ACTIVO, COLOR_INACTIVO } from '@utils/branding'
 import { Concesionario } from '../../types/concesionario'
 import { Expansion } from '../../types/expansion'
+import { ESTADO_COLOR, ESTADO_LABEL, ORDEN_ESTADOS } from '@utils/estadosConcesionario'
 
 export interface DatosPie {
+  clave: string
   name: string
   value: number
   color: string
@@ -68,10 +69,10 @@ export function calcularKpis(concesionarios: Concesionario[], expansiones: Expan
 }
 
 export function datosPieEstado(concesionarios: Concesionario[]): DatosPie[] {
-  const activos = concesionarios.filter((c) => c.estado === 'activo').length
-  const inactivos = concesionarios.filter((c) => c.estado === 'inactivo').length
-  return [
-    { name: 'Activos', value: activos, color: COLOR_ACTIVO },
-    { name: 'Inactivos', value: inactivos, color: COLOR_INACTIVO },
-  ]
+  return ORDEN_ESTADOS.map((estado) => ({
+    clave: estado,
+    name: ESTADO_LABEL[estado],
+    value: concesionarios.filter((c) => c.estado === estado).length,
+    color: ESTADO_COLOR[estado],
+  })).filter((d) => d.value > 0)
 }

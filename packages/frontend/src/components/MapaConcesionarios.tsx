@@ -5,25 +5,20 @@ import L from 'leaflet'
 import { BuscadorDireccion } from '@components/BuscadorDireccion'
 import { ResultadoGeocodificacion } from '@utils/geocodificacion'
 import { Concesionario, Coordenadas, EstadoOperativo } from '../types/concesionario'
+import { ESTADO_LABEL } from '@utils/estadosConcesionario'
 
 const CENTRO_VENEZUELA: [number, number] = [6.5, -66.5]
-
-const ESTADO_LABEL: Record<EstadoOperativo, string> = {
-  activo: 'Activo',
-  inactivo: 'Inactivo',
-  proximo: 'Próximo',
-  en_ejecucion: 'En ejecución',
-  completado: 'Completado',
-}
 
 const COLORES_PIN: Record<
   EstadoOperativo,
   { relleno: string; borde: string; punto: string; check?: boolean }
 > = {
-  activo: { relleno: '#FFCC00', borde: '#000000', punto: '#FFFFFF' },
-  inactivo: { relleno: '#A3A3A3', borde: '#000000', punto: '#FFFFFF' },
+  en_negociacion: { relleno: '#FFCC00', borde: '#000000', punto: '#000000' },
   proximo: { relleno: '#FFFFFF', borde: '#FFCC00', punto: '#000000' },
   en_ejecucion: { relleno: '#F59E0B', borde: '#000000', punto: '#FFFFFF' },
+  activo: { relleno: '#FFCC00', borde: '#000000', punto: '#FFFFFF' },
+  inactivo: { relleno: '#A3A3A3', borde: '#000000', punto: '#FFFFFF' },
+  rechazado: { relleno: '#A3A3A3', borde: '#000000', punto: '#EF4444' },
   completado: { relleno: '#10B981', borde: '#000000', punto: '#FFFFFF', check: true },
 }
 
