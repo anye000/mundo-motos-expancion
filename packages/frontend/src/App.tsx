@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { BrowserRouter as Router, Routes, Route, NavLink, useNavigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import {
@@ -138,6 +138,12 @@ function Navegacion() {
 }
 
 function App() {
+  const inicializar = useAuthStore((estado) => estado.inicializar)
+
+  useEffect(() => {
+    void inicializar()
+  }, [inicializar])
+
   return (
     <Router>
       <Routes>

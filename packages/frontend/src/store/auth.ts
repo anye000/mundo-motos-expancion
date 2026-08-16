@@ -2,6 +2,23 @@ import { create } from 'zustand'
 import { supabase } from '@services/supabase'
 import { PerfilUsuario } from '../types/auth'
 
+/** Limita una promesa con un tiempo máximo; evita que la sesión se quede colgada. */
+function conTimeout<T>(promesa: Promise<T>, ms: number): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const temporizador = setTimeout(() => reject(new Error('Tiempo de espera agotado')), ms)
+    promesa.then(
+      (valor) => {
+        clearTimeout(temporizador)
+        resolve(valor)
+      },
+      (error) => {
+        clearTimeout(temporizador)
+        reject(error)
+      },
+    )
+  })
+}
+
 /** Lee el perfil (rol) del usuario desde la tabla `public.profiles`. */
 async function obtenerPerfil(userId: string): Promise<PerfilUsuario | null> {
   const { data } = await supabase
@@ -31,20 +48,28 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   esAdmin: false,
 
   inicializar: async () => {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession()
-    let usuario: PerfilUsuario | null = null
-    if (session?.user) {
-      usuario = await obtenerPerfil(session.user.id)
-      // Token para los endpoints del backend que exigen autenticación.
-      localStorage.setItem('authToken', session.access_token)
+    if (get().inicializado) return
+    try {
+      const {
+        data: { session },
+      } = await conTimeout(supabase.auth.getSession(), 8000)
+      let usuario: PerfilUsuario | null = null
+      if (session?.user) {
+        usuario = await conTimeout(obtenerPerfil(session.user.id), 8000)
+        // Token para los endpoints del backend que exigen autenticación.
+        localStorage.setItem('authToken', session.access_token)
+      }
+      set({
+        usuario,
+        inicializado: true,
+        esAdmin: usuario?.rol === 'admin',
+      })
+    } catch {
+      // Si la verificación falla o se agota el tiempo, se asume sesión inactiva:
+      // se marca como inicializado para renderizar el login en lugar de quedar colgado.
+      localStorage.removeItem('authToken')
+      set({ usuario: null, inicializado: true, esAdmin: false })
     }
-    set({
-      usuario,
-      inicializado: true,
-      esAdmin: usuario?.rol === 'admin',
-    })
 
     supabase.auth.onAuthStateChange((_evento, sesion) => {
       if (sesion?.user) {
