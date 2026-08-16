@@ -165,6 +165,20 @@ export function ConcesionarioModal({
     return () => inversoRef.current?.abort()
   }, [])
 
+  // Auto-detección al pegar/escribir un enlace de Google Maps (debounce).
+  useEffect(() => {
+    const texto = enlaceMaps.trim()
+    if (!texto || !/^https?:\/\//i.test(texto)) {
+      setErrorEnlace(null)
+      return
+    }
+    const temporizador = setTimeout(() => {
+      void aplicarEnlaceGoogleMaps(texto)
+    }, 600)
+    return () => clearTimeout(temporizador)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enlaceMaps])
+
   if (!abierto) return null
 
   function actualizar(campo: keyof FormConcesionario, valor: string) {
@@ -227,20 +241,6 @@ export function ConcesionarioModal({
     }
     fijarUbicacion(coords.lat, coords.lng)
   }
-
-  // Auto-detección al pegar/escribir un enlace de Google Maps (debounce).
-  useEffect(() => {
-    const texto = enlaceMaps.trim()
-    if (!texto || !/^https?:\/\//i.test(texto)) {
-      setErrorEnlace(null)
-      return
-    }
-    const temporizador = setTimeout(() => {
-      void aplicarEnlaceGoogleMaps(texto)
-    }, 600)
-    return () => clearTimeout(temporizador)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enlaceMaps])
 
   async function manejarEnvio(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
