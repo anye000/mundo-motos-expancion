@@ -1,10 +1,10 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
-import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from 'react-leaflet'
-import { MapPin, X } from 'lucide-react'
+import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet'
+import { Loader2, MapPin, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { apiService } from '@services/api'
 import { BuscadorDireccion } from '@components/BuscadorDireccion'
-import { ResultadoGeocodificacion } from '@utils/geocodificacion'
+import { geocodificarInversa, ResultadoGeocodificacion } from '@utils/geocodificacion'
 import { iconoConcesionario } from '@components/MapaConcesionarios'
 import { Concesionario, EstadoOperativo, TipoExpansion } from '../types/concesionario'
 
@@ -111,12 +111,16 @@ export function ConcesionarioModal({
   const [form, setForm] = useState<FormConcesionario>(FORM_INICIAL)
   const [error, setError] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
+  const [geocodificando, setGeocodificando] = useState(false)
   const arrastrandoRef = useRef(false)
+  const marcadorRef = useRef<L.Marker | null>(null)
+  const inversoRef = useRef<AbortController | null>(null)
 
   useEffect(() => {
     if (abierto) {
       setForm(concesionario ? aFormulario(concesionario) : FORM_INICIAL)
       setError(null)
+      setGeocodificando(false)
     }
   }, [abierto, concesionario])
 
@@ -126,6 +130,16 @@ export function ConcesionarioModal({
     if (Number.isNaN(lat) || Number.isNaN(lng)) return null
     return { lat, lng }
   }, [form.latitud, form.longitud])
+
+  useEffect(() => {
+    if (ubicacion && marcadorRef.current) {
+      marcadorRef.current.openPopup()
+    }
+  }, [ubicacion])
+
+  useEffect(() => {
+    return () => inversoRef.current?.abort()
+  }, [])
 
   if (!abierto) return null
 
@@ -139,6 +153,27 @@ export function ConcesionarioModal({
       latitud: lat.toFixed(6),
       longitud: lng.toFixed(6),
     }))
+
+    inversoRef.current?.abort()
+    const controlador = new AbortController()
+    inversoRef.current = controlador
+    setGeocodificando(true)
+    geocodificarInversa(lat, lng, controlador.signal)
+      .then((resultado) => {
+        if (controlador.signal.aborted) return
+        setForm((prev) => ({
+          ...prev,
+          ciudad: prev.ciudad || resultado.ciudad,
+          departamento: prev.departamento || resultado.departamento,
+          direccion: prev.direccion || resultado.direccion,
+        }))
+      })
+      .catch(() => {
+        // Silencioso: el usuario puede ingresar los datos manualmente.
+      })
+      .finally(() => {
+        if (!controlador.signal.aborted) setGeocodificando(false)
+      })
   }
 
   function manejarResultadoBuscador(resultado: ResultadoGeocodificacion) {
@@ -363,6 +398,12 @@ export function ConcesionarioModal({
             <span className="mb-1 block text-sm font-medium text-mm-gray-300">
               Ubicación (haz clic en el mapa o ingresa las coordenadas)
             </span>
+            {geocodificando && (
+              <span className="mb-1 flex items-center gap-1 text-xs text-mm-yellow">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Detectando dirección...
+              </span>
+            )}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <label className="block">
                 <span className="mb-1 block text-xs text-mm-gray-400">Latitud</span>
@@ -402,6 +443,7 @@ export function ConcesionarioModal({
                 <BuscadorDireccion onSeleccionar={manejarResultadoBuscador} placeholder="Buscar dirección..." />
                 {ubicacion && (
                   <Marker
+                    ref={marcadorRef}
                     position={[ubicacion.lat, ubicacion.lng]}
                     icon={iconoConcesionario('activo')}
                     draggable
@@ -415,7 +457,9 @@ export function ConcesionarioModal({
                         fijarUbicacion(pos.lat, pos.lng)
                       },
                     }}
-                  />
+                  >
+                    <Popup>Ubicación seleccionada</Popup>
+                  </Marker>
                 )}
                 {ubicacion && (
                   <VolarAUbicacion

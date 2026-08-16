@@ -77,3 +77,45 @@ export async function buscarDireccion(
     };
   });
 }
+
+export interface ResultadoUbicacionInversa {
+  direccion: string;
+  ciudad: string;
+  departamento: string;
+}
+
+/**
+ * Geocodificación inversa: a partir de una coordenada devuelve la dirección,
+ * ciudad y departamento más próximos vía Nominatim. Acepta un `AbortSignal`
+ * para cancelar peticiones obsoletas (p. ej. cuando el usuario hace varios clics).
+ */
+export async function geocodificarInversa(
+  lat: number,
+  lng: number,
+  signal?: AbortSignal
+): Promise<ResultadoUbicacionInversa> {
+  const params = new URLSearchParams({
+    format: 'jsonv2',
+    addressdetails: '1',
+    'accept-language': 'es',
+    lat: String(lat),
+    lon: String(lng),
+  });
+
+  const respuesta = await fetch(`https://nominatim.openstreetmap.org/reverse?${params}`, {
+    signal,
+    headers: { Accept: 'application/json' },
+  });
+
+  if (!respuesta.ok) {
+    throw new Error('Error al consultar el servicio de geocodificación');
+  }
+
+  const datos = (await respuesta.json()) as { address?: DireccionNominatim };
+  const address = datos.address ?? {};
+  return {
+    direccion: extraerDireccion(address),
+    ciudad: extraerCiudad(address),
+    departamento: address.state ?? '',
+  };
+}
