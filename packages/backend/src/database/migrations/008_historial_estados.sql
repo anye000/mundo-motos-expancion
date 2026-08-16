@@ -73,21 +73,21 @@ BEGIN
     END IF;
 
     IF v_clave IN ('latitud', 'longitud') THEN
-      v_expr := format('(p_updates->>%L)::numeric', v_clave);
+      v_expr := format('($2->>%L)::numeric', v_clave);
     ELSIF v_clave = 'gerente_id' THEN
       v_expr := format(
-        'CASE WHEN (p_updates->>%L) IS NULL OR (p_updates->>%L) = '''' THEN NULL ELSE (p_updates->>%L)::uuid END',
+        'CASE WHEN ($2->>%L) IS NULL OR ($2->>%L) = '''' THEN NULL ELSE ($2->>%L)::uuid END',
         v_clave, v_clave, v_clave
       );
     ELSIF v_clave = 'fecha_apertura_programada' THEN
       v_expr := format(
-        'CASE WHEN (p_updates->>%L) IS NULL OR (p_updates->>%L) = '''' THEN NULL ELSE (p_updates->>%L)::date END',
+        'CASE WHEN ($2->>%L) IS NULL OR ($2->>%L) = '''' THEN NULL ELSE ($2->>%L)::date END',
         v_clave, v_clave, v_clave
       );
     ELSIF v_clave = 'metadatos' THEN
-      v_expr := format('p_updates->%L', v_clave);
+      v_expr := format('$2->%L', v_clave);
     ELSE
-      v_expr := format('(p_updates->>%L)', v_clave);
+      v_expr := format('($2->>%L)', v_clave);
     END IF;
 
     IF v_set <> '' THEN v_set := v_set || ', '; END IF;
@@ -100,7 +100,7 @@ BEGIN
       RETURNING to_jsonb(concesionarios) INTO v_fila;
   ELSE
     EXECUTE format('UPDATE concesionarios SET %s, updated_at = now() WHERE id = $1 RETURNING to_jsonb(concesionarios)', v_set)
-      INTO v_fila USING p_id;
+      INTO v_fila USING p_id, p_updates;
   END IF;
 
   RETURN v_fila;
