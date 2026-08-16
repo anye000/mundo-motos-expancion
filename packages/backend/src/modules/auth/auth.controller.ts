@@ -11,12 +11,13 @@ import * as authService from './auth.service';
 
 /** GET /api/v1/auth/usuarios - lista los accesos creados (admin). */
 export async function listarUsuarios(
-  _req: Request,
+  req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> {
   try {
-    const usuarios = await authService.listarUsuarios();
+    const token = extraerToken(req);
+    const usuarios = await authService.listarUsuarios(token);
     sendSuccess(res, usuarios, 'Usuarios obtenidos');
   } catch (error) {
     next(error);
@@ -37,14 +38,23 @@ export async function registrarUsuario(
     if (typeof password !== 'string' || password.length < 6) {
       throw new ApiError('La contraseña debe tener al menos 6 caracteres', 400);
     }
-    const usuario = await authService.crearUsuario({
-      username,
-      password,
-      nombre,
-      emailRespaldo,
-    });
+    const token = extraerToken(req);
+    const usuario = await authService.crearUsuario(
+      { username, password, nombre, emailRespaldo },
+      token
+    );
     sendSuccess(res, usuario, 'Usuario creado', 201);
   } catch (error) {
     next(error);
   }
+}
+
+/** Extrae el Bearer token del header Authorization. */
+function extraerToken(req: Request): string {
+  const header = req.headers.authorization;
+  const token = header?.startsWith('Bearer ') ? header.slice(7) : null;
+  if (!token) {
+    throw new ApiError('No autorizado', 401);
+  }
+  return token;
 }

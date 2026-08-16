@@ -24,4 +24,21 @@ export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseKey, {
   },
 });
 
+/**
+ * Cliente autenticado con el token JWT de un usuario. Envía ese token en el
+ * header Authorization para que RLS evalúe la identidad real del usuario
+ * (auth.uid()) en vez de fallar por ser un cliente anónimo sin sesión.
+ */
+export function getSupabaseConToken(token: string): SupabaseClient {
+  return createClient(supabaseUrl!, supabaseKey!, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+    global: {
+      headers: { Authorization: `Bearer ${token}` },
+    },
+  });
+}
+
 export default supabase;

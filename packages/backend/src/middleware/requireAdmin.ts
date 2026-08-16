@@ -7,9 +7,8 @@
  * depender de la SERVICE ROLE KEY.
  */
 
-import { createClient } from '@supabase/supabase-js';
 import { Request, Response, NextFunction } from 'express';
-import { supabase } from '@config/supabase';
+import { supabase, getSupabaseConToken } from '@config/supabase';
 import { sendError } from '@utils/helpers';
 
 export async function requireAdmin(
@@ -33,12 +32,7 @@ export async function requireAdmin(
 
     // Cliente autenticado con el token del usuario: RLS evalúa auth.uid() y el
     // usuario puede leer su propio perfil (policy profiles_select_own).
-    const url = process.env.SUPABASE_URL;
-    const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
-    const cliente = createClient(url ?? '', key ?? '', {
-      auth: { persistSession: false, autoRefreshToken: false },
-      global: { headers: { Authorization: `Bearer ${token}` } },
-    });
+    const cliente = getSupabaseConToken(token);
 
     const { data: perfil } = await cliente
       .from('profiles')
