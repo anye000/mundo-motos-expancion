@@ -5,14 +5,6 @@ import App from './App.tsx'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import './styles/index.css'
 
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch((error) => {
-      console.error('Service Worker registration failed:', error)
-    })
-  })
-}
-
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ErrorBoundary mensaje="Ocurrió un error en la aplicación. Recarga la página para continuar.">

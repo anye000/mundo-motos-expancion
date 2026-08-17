@@ -13,45 +13,47 @@ export default defineConfig({
       manifest: {
         name: 'Mundo Motos CRM',
         short_name: 'MM CRM',
-        description: 'CRM y Dashboard de gestión de concesionarios Mundo Motos',
+        description: 'CRM y Dashboard de gestión y geolocalización de concesionarios Mundo Motos',
+        lang: 'es',
+        dir: 'ltr',
         theme_color: '#000000',
-        background_color: '#ffffff',
+        background_color: '#000000',
         display: 'standalone',
         orientation: 'portrait-primary',
         scope: '/',
         start_url: '/',
         icons: [
           {
-            src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYPhfDwAACoPj MizAZTwAAAABJRU5ErJggg==',
+            src: 'icon-192x192.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any',
           },
           {
-            src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYPhfDwAACoPj MizAZTwAAAABJRU5ErJggg==',
+            src: 'icon-512x512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any',
           },
           {
-            src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYPhfDwAACoPj MizAZTwAAAABJRU5ErJggg==',
+            src: 'maskable-icon-192x192.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'maskable',
           },
           {
-            src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYPhfDwAACoPj MizAZTwAAAABJRU5ErJggg==',
+            src: 'maskable-icon-512x512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable',
           },
         ],
-        screenshots: [],
         categories: ['business', 'productivity'],
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
         navigateFallback: 'index.html',
+        navigateFallbackDenylist: [/^\/api/],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/.*\.(jpg|jpeg|png|gif|webp|svg)$/,
@@ -60,17 +62,30 @@ export default defineConfig({
               cacheName: 'image-cache',
               expiration: {
                 maxEntries: 50,
-                maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+                maxAgeSeconds: 30 * 24 * 60 * 60,
               },
             },
           },
           {
-            urlPattern: /^https:\/\/api\..*\//,
+            urlPattern: /^https:\/\/.*\.supabase\.(co|in)\/.*/,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'supabase-cache',
+              networkTimeoutSeconds: 10,
+              expiration: {
+                maxAgeSeconds: 60 * 5,
+                maxEntries: 50,
+              },
+            },
+          },
+          {
+            urlPattern: /^https?:\/\/localhost:3000\/.*/,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'api-cache',
+              networkTimeoutSeconds: 10,
               expiration: {
-                maxAgeSeconds: 60 * 5, // 5 minutes
+                maxAgeSeconds: 60 * 5,
               },
             },
           },
