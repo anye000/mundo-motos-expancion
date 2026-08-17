@@ -8,7 +8,7 @@
 
 import { ApiError } from '@utils/helpers';
 import { mapSupabaseError } from '@utils/supabase-errors';
-import { supabase } from '@config/supabase';
+import { getSupabaseConToken } from '@config/supabase';
 import {
   Expansion,
   CreateExpansionInput,
@@ -65,8 +65,9 @@ function validateCoordenada(value: unknown, campo: string, min: number, max: num
 }
 
 /** Restaura una expansión soft-deleted (reactivación desde el concesionario). */
-async function restaurarExpansion(id: string): Promise<void> {
-  const { error } = await supabase
+async function restaurarExpansion(id: string, token: string): Promise<void> {
+  const cliente = getSupabaseConToken(token);
+  const { error } = await cliente
     .from(TABLE)
     .update({ deleted_at: null, updated_at: new Date().toISOString() })
     .eq('id', id);
@@ -76,8 +77,9 @@ async function restaurarExpansion(id: string): Promise<void> {
 }
 
 /** Soft delete directo por id (usado por la sincronización del concesionario). */
-async function softDeleteExpansionById(id: string): Promise<void> {
-  const { error } = await supabase
+async function softDeleteExpansionById(id: string, token: string): Promise<void> {
+  const cliente = getSupabaseConToken(token);
+  const { error } = await cliente
     .from(TABLE)
     .update({ deleted_at: new Date().toISOString(), updated_at: new Date().toISOString() })
     .eq('id', id);
@@ -91,12 +93,14 @@ async function softDeleteExpansionById(id: string): Promise<void> {
  * para poder restaurarlas sin duplicar filas al reactivar el estado.
  */
 export async function getExpansionByConcesionarioId(
-  concesionarioId: string
+  concesionarioId: string,
+  token: string
 ): Promise<Expansion | null> {
   if (!concesionarioId) {
     return null;
   }
-  const { data, error } = await supabase
+  const cliente = getSupabaseConToken(token);
+  const { data, error } = await cliente
     .from(TABLE)
     .select('*')
     .eq('concesionario_id', concesionarioId)
@@ -144,14 +148,15 @@ function validateTipo(value: unknown): string {
  * Obtiene las expansiones con filtros opcionales por estado, locación y rango
  * de fechas de apertura, con paginación. Excluye registros con soft delete.
  */
-export async function getExpansiones(filters: ExpansionFilters = {}): Promise<PaginatedExpansiones> {
+export async function getExpansiones(filters: ExpansionFilters = {}, token: string): Promise<PaginatedExpansiones> {
   const page = filters.page && filters.page > 0 ? Math.floor(filters.page) : 1;
   const limit =
     filters.limit && filters.limit > 0 ? Math.min(Math.floor(filters.limit), LIMIT_MAX) : 20;
   const start = (page - 1) * limit;
   const end = start + limit - 1;
 
-  let query = supabase.from(TABLE).select('*', { count: 'exact' }).is('deleted_at', null);
+  const cliente = getSupabaseConToken(token);
+  let query = cliente.from(TABLE).select('*', { count: 'exact' }).is('deleted_at', null);
 
   if (filters.estado) {
     query = query.eq('estado', filters.estado);
@@ -184,12 +189,13 @@ export async function getExpansiones(filters: ExpansionFilters = {}): Promise<Pa
 }
 
 /** Obtiene una expansión por id. Lanza 404 si no existe. */
-export async function getExpansionById(id: string): Promise<Expansion> {
+export async function getExpansionById(id: string, token: string): Promise<Expansion> {
   if (!id) {
     throw new ApiError('El identificador de la expansión es requerido', 400);
   }
 
-  const { data, error } = await supabase
+  const cliente = getSupabaseConToken(token);
+  const { data, error } = await cliente
     .from(TABLE)
     .select('*')
     .eq('id', id)
@@ -208,7 +214,7 @@ export async function getExpansionById(id: string): Promise<Expansion> {
 }
 
 /** Crea una expansión validando los campos requeridos. */
-export async function createExpansion(input: CreateExpansionInput): Promise<Expansion> {
+export async function createExpansion(input: CreateExpansionInput, token: string): Promise<Expansion> {
   const concesionario = validateRequiredString(input.concesionario, 'concesionario');
   const { ciudad, departamento, locacion } = resolveUbicacion(input);
   const fechaApertura = validateFecha(input.fecha_apertura, 'fecha_apertura');
@@ -218,8 +224,9 @@ export async function createExpansion(input: CreateExpansionInput): Promise<Expa
   const avance = input.avance !== undefined ? validateAvance(input.avance) : 0;
 
   const now = new Date().toISOString();
+  const cliente = getSupabaseConToken(token);
 
-  const { data, error } = await supabase
+  const { data, error } = await cliente
     .from(TABLE)
     .insert({
       concesionario,
@@ -253,7 +260,7 @@ export async function createExpansion(input: CreateExpansionInput): Promise<Expa
 }
 
 /** Actualiza los datos, el estado o el avance de una expansión. */
-export async function updateExpansion(id: string, input: UpdateExpansionInput): Promise<Expansion> {
+export async function updateExpansion(id: string, input: UpdateExpansionInput, token: string): Promise<Expansion> {
   if (!id) {
     throw new ApiError('El identificador de la expansión es requerido', 400);
   }
@@ -302,7 +309,8 @@ export async function updateExpansion(id: string, input: UpdateExpansionInput): 
     updates.observaciones = input.observaciones;
   }
 
-  const { data, error } = await supabase
+  const cliente = getSupabaseConToken(token);
+  const { data, error } = await cliente
     .from(TABLE)
     .update(updates)
     .eq('id', id)
@@ -322,14 +330,15 @@ export async function updateExpansion(id: string, input: UpdateExpansionInput): 
 }
 
 /** Soft delete: marca la expansión con `deleted_at` (no la borra). */
-export async function deleteExpansion(id: string): Promise<void> {
+export async function deleteExpansion(id: string, token: string): Promise<void> {
   if (!id) {
     throw new ApiError('El identificador de la expansión es requerido', 400);
   }
 
   const now = new Date().toISOString();
+  const cliente = getSupabaseConToken(token);
 
-  const { data, error } = await supabase
+  const { data, error } = await cliente
     .from(TABLE)
     .update({ deleted_at: now, updated_at: now })
     .eq('id', id)
@@ -355,7 +364,7 @@ export async function deleteExpansion(id: string): Promise<void> {
  * - Estados operativos (`activo`, `inactivo`) o sin fecha: soft deletea la
  *   expansión vinculada si existía.
  */
-export async function sincronizarExpansion(concesionario: Concesionario): Promise<void> {
+export async function sincronizarExpansion(concesionario: Concesionario, token: string): Promise<void> {
   const esEstadoExpansion = (ESTADOS_EXPANSION as string[]).includes(concesionario.estado);
   const fechaProgramada = concesionario.fecha_apertura_programada;
   const tieneFecha =
@@ -363,18 +372,18 @@ export async function sincronizarExpansion(concesionario: Concesionario): Promis
     fechaProgramada.trim() !== '' &&
     !Number.isNaN(Date.parse(fechaProgramada));
 
-  const existente = await getExpansionByConcesionarioId(concesionario.id);
+  const existente = await getExpansionByConcesionarioId(concesionario.id, token);
 
   if (!esEstadoExpansion || !tieneFecha) {
     if (existente && existente.deleted_at === null) {
-      await softDeleteExpansionById(existente.id);
+      await softDeleteExpansionById(existente.id, token);
     }
     return;
   }
 
   if (existente) {
     if (existente.deleted_at !== null) {
-      await restaurarExpansion(existente.id);
+      await restaurarExpansion(existente.id, token);
     }
     await updateExpansion(existente.id, {
       concesionario: concesionario.nombre,
@@ -385,7 +394,7 @@ export async function sincronizarExpansion(concesionario: Concesionario): Promis
       departamento: concesionario.departamento,
       latitud: concesionario.latitud,
       longitud: concesionario.longitud,
-    });
+    }, token);
     return;
   }
 
@@ -400,5 +409,5 @@ export async function sincronizarExpansion(concesionario: Concesionario): Promis
     latitud: concesionario.latitud,
     longitud: concesionario.longitud,
     avance: concesionario.estado === 'completado' ? 100 : 0,
-  });
+  }, token);
 }

@@ -8,7 +8,7 @@
 
 import { ApiError } from '@utils/helpers';
 import { mapSupabaseError } from '@utils/supabase-errors';
-import { supabase } from '@config/supabase';
+import { getSupabaseConToken } from '@config/supabase';
 import {
   Concesionario,
   CreateConcesionarioInput,
@@ -87,7 +87,8 @@ function validateNumber(value: unknown, campo: string, min: number, max: number)
  * departamento, con paginación. Excluye registros con soft delete.
  */
 export async function getConcesionarios(
-  filters: ConcesionarioFilters = {}
+  filters: ConcesionarioFilters = {},
+  token: string
 ): Promise<PaginatedConcesionarios> {
   const page = filters.page && filters.page > 0 ? Math.floor(filters.page) : 1;
   const limit =
@@ -95,7 +96,8 @@ export async function getConcesionarios(
   const start = (page - 1) * limit;
   const end = start + limit - 1;
 
-  let query = supabase.from(TABLE).select('*', { count: 'exact' }).is('deleted_at', null);
+  const cliente = getSupabaseConToken(token);
+  let query = cliente.from(TABLE).select('*', { count: 'exact' }).is('deleted_at', null);
 
   if (filters.estado) {
     query = query.eq('estado', filters.estado);
@@ -125,12 +127,13 @@ export async function getConcesionarios(
 }
 
 /** Obtiene un concesionario por id. Lanza 404 si no existe. */
-export async function getConcesionarioById(id: string): Promise<Concesionario> {
+export async function getConcesionarioById(id: string, token: string): Promise<Concesionario> {
   if (!id) {
     throw new ApiError('El identificador del concesionario es requerido', 400);
   }
 
-  const { data, error } = await supabase
+  const cliente = getSupabaseConToken(token);
+  const { data, error } = await cliente
     .from(TABLE)
     .select('*')
     .eq('id', id)
@@ -149,7 +152,7 @@ export async function getConcesionarioById(id: string): Promise<Concesionario> {
 }
 
 /** Crea un concesionario validando los campos requeridos. */
-export async function createConcesionario(input: CreateConcesionarioInput): Promise<Concesionario> {
+export async function createConcesionario(input: CreateConcesionarioInput, token: string): Promise<Concesionario> {
   const nombre = validateRequiredString(input.nombre, 'nombre');
   const razonSocial = validateRequiredString(input.razon_social, 'razon_social');
   const rif = validateRIF(input.rif, 'rif');
@@ -172,8 +175,9 @@ export async function createConcesionario(input: CreateConcesionarioInput): Prom
   const metadatos = input.metadatos ?? {};
 
   const now = new Date().toISOString();
+  const cliente = getSupabaseConToken(token);
 
-  const { data, error } = await supabase
+  const { data, error } = await cliente
     .from(TABLE)
     .insert({
       nombre,
@@ -203,14 +207,15 @@ export async function createConcesionario(input: CreateConcesionarioInput): Prom
   }
 
   const creado = data as Concesionario;
-  await sincronizarExpansion(creado);
+  await sincronizarExpansion(creado, token);
   return creado;
 }
 
 /** Actualiza los datos o el estado operativo de un concesionario. */
 export async function updateConcesionario(
   id: string,
-  input: UpdateConcesionarioInput
+  input: UpdateConcesionarioInput,
+  token: string
 ): Promise<Concesionario> {
   if (!id) {
     throw new ApiError('El identificador del concesionario es requerido', 400);
@@ -276,7 +281,8 @@ export async function updateConcesionario(
     updates.metadatos = input.metadatos;
   }
 
-  const { data, error } = await supabase
+  const cliente = getSupabaseConToken(token);
+  const { data, error } = await cliente
     .rpc('actualizar_concesionario_con_historial', {
       p_id: id,
       p_updates: updates,
@@ -295,17 +301,18 @@ export async function updateConcesionario(
   }
 
   const actualizado = data as Concesionario;
-  await sincronizarExpansion(actualizado);
+  await sincronizarExpansion(actualizado, token);
   return actualizado;
 }
 
 /** Obtiene el historial de cambios de estado de un concesionario (más reciente primero). */
-export async function getHistorialEstados(concesionarioId: string): Promise<HistorialEstado[]> {
+export async function getHistorialEstados(concesionarioId: string, token: string): Promise<HistorialEstado[]> {
   if (!concesionarioId) {
     throw new ApiError('El identificador del concesionario es requerido', 400);
   }
 
-  const { data, error } = await supabase
+  const cliente = getSupabaseConToken(token);
+  const { data, error } = await cliente
     .from('historial_estados')
     .select('*')
     .eq('concesionario_id', concesionarioId)
@@ -325,12 +332,13 @@ export async function getHistorialEstados(concesionarioId: string): Promise<Hist
  * expansiones vinculadas (cronograma/calendario) se eliminan en cascada
  * (ON DELETE CASCADE en interacciones_crm y expansiones.concesionario_id).
  */
-export async function deleteConcesionario(id: string): Promise<void> {
+export async function deleteConcesionario(id: string, token: string): Promise<void> {
   if (!id) {
     throw new ApiError('El identificador del concesionario es requerido', 400);
   }
 
-  const { data, error } = await supabase
+  const cliente = getSupabaseConToken(token);
+  const { data, error } = await cliente
     .from(TABLE)
     .delete()
     .eq('id', id)

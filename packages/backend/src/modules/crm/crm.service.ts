@@ -8,7 +8,7 @@
 
 import { ApiError } from '@utils/helpers';
 import { mapSupabaseError } from '@utils/supabase-errors';
-import { supabase } from '@config/supabase';
+import { getSupabaseConToken } from '@config/supabase';
 import {
   CreateInteraccionInput,
   InteraccionCrm,
@@ -39,13 +39,15 @@ function validateRequiredString(value: unknown, campo: string): string {
  */
 export async function getInteraccionesByConcesionario(
   concesionarioId: string,
-  filters: InteraccionFilters = {}
+  filters: InteraccionFilters = {},
+  token: string
 ): Promise<PaginatedInteracciones> {
   if (!concesionarioId) {
     throw new ApiError('El identificador del concesionario es requerido', 400);
   }
 
-  const { data: concesionario, error: errorConcesionario } = await supabase
+  const cliente = getSupabaseConToken(token);
+  const { data: concesionario, error: errorConcesionario } = await cliente
     .from('concesionarios')
     .select('id')
     .eq('id', concesionarioId)
@@ -65,7 +67,7 @@ export async function getInteraccionesByConcesionario(
   const start = (page - 1) * limit;
   const end = start + limit - 1;
 
-  let query = supabase
+  let query = cliente
     .from(TABLE)
     .select('*', { count: 'exact' })
     .eq('concesionario_id', concesionarioId);
@@ -92,7 +94,7 @@ export async function getInteraccionesByConcesionario(
 }
 
 /** Registra una interacción validando los campos requeridos y el tipo. */
-export async function createInteraccion(input: CreateInteraccionInput): Promise<InteraccionCrm> {
+export async function createInteraccion(input: CreateInteraccionInput, token: string): Promise<InteraccionCrm> {
   const concesionario_id = validateRequiredString(input.concesionario_id, 'concesionario_id');
   const detalles = validateRequiredString(input.detalles, 'detalles');
   const usuario_responsable = validateRequiredString(
@@ -107,7 +109,8 @@ export async function createInteraccion(input: CreateInteraccionInput): Promise<
     );
   }
 
-  const { data, error } = await supabase
+  const cliente = getSupabaseConToken(token);
+  const { data, error } = await cliente
     .from(TABLE)
     .insert({
       concesionario_id,

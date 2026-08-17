@@ -9,6 +9,10 @@ import { Request, Response, NextFunction } from 'express';
 import { sendSuccess, ApiError } from '@utils/helpers';
 import * as authService from './auth.service';
 
+function extraerToken(req: Request): string {
+  return (req as any).token as string;
+}
+
 /** GET /api/v1/auth/usuarios - lista los accesos creados (admin). */
 export async function listarUsuarios(
   req: Request,
@@ -64,14 +68,4 @@ export async function eliminarUsuario(
   } catch (error) {
     next(error);
   }
-}
-
-/** Extrae el Bearer token del header Authorization. */
-function extraerToken(req: Request): string {
-  const header = req.headers.authorization;
-  const token = header?.startsWith('Bearer ') ? header.slice(7) : null;
-  if (!token) {
-    throw new ApiError('No autorizado', 401);
-  }
-  return token;
 }

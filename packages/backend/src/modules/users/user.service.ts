@@ -6,13 +6,14 @@
  */
 
 import { mapSupabaseError } from '@utils/supabase-errors';
-import { supabase } from '@config/supabase';
+import { getSupabaseConToken } from '@config/supabase';
 import { Usuario } from './user.model';
 
 const TABLE = 'users';
 
-export async function getUsuariosActivos(): Promise<Usuario[]> {
-  const { data, error } = await supabase
+export async function getUsuariosActivos(token: string): Promise<Usuario[]> {
+  const cliente = getSupabaseConToken(token);
+  const { data, error } = await cliente
     .from(TABLE)
     .select('id, nombre, apellido, email, rol, estado')
     .eq('estado', 'activo')

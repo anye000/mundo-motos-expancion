@@ -5,6 +5,8 @@
  */
 
 import { Router } from 'express';
+import { requireAuth } from '@middleware/requireAuth';
+import { requireAdmin } from '@middleware/requireAdmin';
 import {
   listConcesionarios,
   getConcesionario,
@@ -16,11 +18,11 @@ import {
 
 const concesionariosRouter: Router = Router();
 
-concesionariosRouter.get('/', listConcesionarios);
-concesionariosRouter.get('/:id', getConcesionario);
-concesionariosRouter.get('/:id/historial-estados', getHistorialEstados);
-concesionariosRouter.post('/', createConcesionario);
-concesionariosRouter.put('/:id', updateConcesionario);
-concesionariosRouter.delete('/:id', deleteConcesionario);
+concesionariosRouter.get('/', requireAuth, listConcesionarios);
+concesionariosRouter.get('/:id', requireAuth, getConcesionario);
+concesionariosRouter.get('/:id/historial-estados', requireAuth, getHistorialEstados);
+concesionariosRouter.post('/', requireAdmin, createConcesionario);
+concesionariosRouter.put('/:id', requireAdmin, updateConcesionario);
+concesionariosRouter.delete('/:id', requireAdmin, deleteConcesionario);
 
 export default concesionariosRouter;

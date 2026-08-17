@@ -5,6 +5,8 @@
  */
 
 import { Router } from 'express';
+import { requireAuth } from '@middleware/requireAuth';
+import { requireAdmin } from '@middleware/requireAdmin';
 import {
   listExpansiones,
   getExpansion,
@@ -15,10 +17,10 @@ import {
 
 const expansionesRouter: Router = Router();
 
-expansionesRouter.get('/', listExpansiones);
-expansionesRouter.get('/:id', getExpansion);
-expansionesRouter.post('/', createExpansion);
-expansionesRouter.put('/:id', updateExpansion);
-expansionesRouter.delete('/:id', deleteExpansion);
+expansionesRouter.get('/', requireAuth, listExpansiones);
+expansionesRouter.get('/:id', requireAuth, getExpansion);
+expansionesRouter.post('/', requireAdmin, createExpansion);
+expansionesRouter.put('/:id', requireAdmin, updateExpansion);
+expansionesRouter.delete('/:id', requireAdmin, deleteExpansion);
 
 export default expansionesRouter;

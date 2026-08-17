@@ -26,6 +26,10 @@ function queryString(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim() !== '' ? value.trim() : undefined;
 }
 
+function extraerToken(req: Request): string {
+  return (req as any).token as string;
+}
+
 /** GET /api/v1/reportes - reporte combinado con filtros. */
 export async function getReportes(
   req: Request,
@@ -44,7 +48,7 @@ export async function getReportes(
       fecha_desde: queryString(req.query.fecha_desde),
       fecha_hasta: queryString(req.query.fecha_hasta),
     };
-    const data = await reporteService.getReportes(filters);
+    const data = await reporteService.getReportes(filters, extraerToken(req));
     sendSuccess(res, data, 'Reporte generado exitosamente');
   } catch (error) {
     next(error);

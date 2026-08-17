@@ -5,10 +5,11 @@
  */
 
 import { Router } from 'express';
+import { requireAuth } from '@middleware/requireAuth';
 import { getReportes } from './reporte.controller';
 
 const reportesRouter: Router = Router();
 
-reportesRouter.get('/', getReportes);
+reportesRouter.get('/', requireAuth, getReportes);
 
 export default reportesRouter;

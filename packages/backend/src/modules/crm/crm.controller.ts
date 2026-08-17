@@ -25,6 +25,10 @@ function queryNumber(value: unknown): number | undefined {
   return Number.isNaN(parsed) ? undefined : parsed;
 }
 
+function extraerToken(req: Request): string {
+  return (req as any).token as string;
+}
+
 /** GET /api/v1/crm/concesionario/:concesionarioId - historial de interacciones. */
 export async function listInteraccionesByConcesionario(
   req: Request,
@@ -44,7 +48,8 @@ export async function listInteraccionesByConcesionario(
 
     const result = await crmService.getInteraccionesByConcesionario(
       req.params.concesionarioId,
-      filters
+      filters,
+      extraerToken(req)
     );
     sendPaginated(res, result.data, result.total, result.page, result.limit);
   } catch (error) {
@@ -59,7 +64,7 @@ export async function createInteraccion(
   next: NextFunction
 ): Promise<void> {
   try {
-    const interaccion = await crmService.createInteraccion(req.body);
+    const interaccion = await crmService.createInteraccion(req.body, extraerToken(req));
     sendSuccess(res, interaccion, 'Interacción registrada exitosamente', 201);
   } catch (error) {
     next(error);

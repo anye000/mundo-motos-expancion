@@ -9,14 +9,18 @@ import { Request, Response, NextFunction } from 'express';
 import { sendSuccess } from '@utils/helpers';
 import * as userService from './user.service';
 
+function extraerToken(req: Request): string {
+  return (req as any).token as string;
+}
+
 /** GET /api/v1/users - lista usuarios activos. */
 export async function listUsuariosActivos(
-  _req: Request,
+  req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> {
   try {
-    const usuarios = await userService.getUsuariosActivos();
+    const usuarios = await userService.getUsuariosActivos(extraerToken(req));
     sendSuccess(res, usuarios, 'Usuarios obtenidos');
   } catch (error) {
     next(error);

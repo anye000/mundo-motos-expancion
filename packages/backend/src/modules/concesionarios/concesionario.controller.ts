@@ -33,6 +33,10 @@ function queryNumber(value: unknown): number | undefined {
   return Number.isNaN(parsed) ? undefined : parsed;
 }
 
+function extraerToken(req: Request): string {
+  return (req as any).token as string;
+}
+
 /** GET /api/v1/concesionarios - lista con filtros y paginación. */
 export async function listConcesionarios(
   req: Request,
@@ -52,7 +56,7 @@ export async function listConcesionarios(
       limit: queryNumber(req.query.limit),
     };
 
-    const result = await concesionarioService.getConcesionarios(filters);
+    const result = await concesionarioService.getConcesionarios(filters, extraerToken(req));
     sendPaginated(res, result.data, result.total, result.page, result.limit);
   } catch (error) {
     next(error);
@@ -66,7 +70,7 @@ export async function getConcesionario(
   next: NextFunction
 ): Promise<void> {
   try {
-    const concesionario = await concesionarioService.getConcesionarioById(req.params.id);
+    const concesionario = await concesionarioService.getConcesionarioById(req.params.id, extraerToken(req));
     sendSuccess(res, concesionario, 'Concesionario obtenido');
   } catch (error) {
     next(error);
@@ -80,7 +84,7 @@ export async function createConcesionario(
   next: NextFunction
 ): Promise<void> {
   try {
-    const concesionario = await concesionarioService.createConcesionario(req.body);
+    const concesionario = await concesionarioService.createConcesionario(req.body, extraerToken(req));
     sendSuccess(res, concesionario, 'Concesionario creado exitosamente', 201);
   } catch (error) {
     next(error);
@@ -94,7 +98,7 @@ export async function updateConcesionario(
   next: NextFunction
 ): Promise<void> {
   try {
-    const concesionario = await concesionarioService.updateConcesionario(req.params.id, req.body);
+    const concesionario = await concesionarioService.updateConcesionario(req.params.id, req.body, extraerToken(req));
     sendSuccess(res, concesionario, 'Concesionario actualizado');
   } catch (error) {
     next(error);
@@ -108,7 +112,7 @@ export async function deleteConcesionario(
   next: NextFunction
 ): Promise<void> {
   try {
-    await concesionarioService.deleteConcesionario(req.params.id);
+    await concesionarioService.deleteConcesionario(req.params.id, extraerToken(req));
     sendSuccess(res, { id: req.params.id }, 'Concesionario eliminado');
   } catch (error) {
     next(error);
@@ -122,7 +126,7 @@ export async function getHistorialEstados(
   next: NextFunction
 ): Promise<void> {
   try {
-    const historial = await concesionarioService.getHistorialEstados(req.params.id);
+    const historial = await concesionarioService.getHistorialEstados(req.params.id, extraerToken(req));
     sendSuccess(res, historial, 'Historial de estados obtenido');
   } catch (error) {
     next(error);

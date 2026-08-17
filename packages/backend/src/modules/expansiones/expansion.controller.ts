@@ -25,6 +25,10 @@ function queryNumber(value: unknown): number | undefined {
   return Number.isNaN(parsed) ? undefined : parsed;
 }
 
+function extraerToken(req: Request): string {
+  return (req as any).token as string;
+}
+
 /** GET /api/v1/expansiones - lista con filtros y paginación. */
 export async function listExpansiones(
   req: Request,
@@ -45,7 +49,7 @@ export async function listExpansiones(
       limit: queryNumber(req.query.limit),
     };
 
-    const result = await expansionService.getExpansiones(filters);
+    const result = await expansionService.getExpansiones(filters, extraerToken(req));
     sendPaginated(res, result.data, result.total, result.page, result.limit);
   } catch (error) {
     next(error);
@@ -59,7 +63,7 @@ export async function getExpansion(
   next: NextFunction
 ): Promise<void> {
   try {
-    const expansion = await expansionService.getExpansionById(req.params.id);
+    const expansion = await expansionService.getExpansionById(req.params.id, extraerToken(req));
     sendSuccess(res, expansion, 'Expansión obtenida');
   } catch (error) {
     next(error);
@@ -73,7 +77,7 @@ export async function createExpansion(
   next: NextFunction
 ): Promise<void> {
   try {
-    const expansion = await expansionService.createExpansion(req.body);
+    const expansion = await expansionService.createExpansion(req.body, extraerToken(req));
     sendSuccess(res, expansion, 'Expansión creada exitosamente', 201);
   } catch (error) {
     next(error);
@@ -87,7 +91,7 @@ export async function updateExpansion(
   next: NextFunction
 ): Promise<void> {
   try {
-    const expansion = await expansionService.updateExpansion(req.params.id, req.body);
+    const expansion = await expansionService.updateExpansion(req.params.id, req.body, extraerToken(req));
     sendSuccess(res, expansion, 'Expansión actualizada');
   } catch (error) {
     next(error);
@@ -101,7 +105,7 @@ export async function deleteExpansion(
   next: NextFunction
 ): Promise<void> {
   try {
-    await expansionService.deleteExpansion(req.params.id);
+    await expansionService.deleteExpansion(req.params.id, extraerToken(req));
     sendSuccess(res, { id: req.params.id }, 'Expansión eliminada');
   } catch (error) {
     next(error);

@@ -8,7 +8,7 @@
 
 import { ApiError } from '@utils/helpers';
 import { mapSupabaseError } from '@utils/supabase-errors';
-import { supabase } from '@config/supabase';
+import { getSupabaseConToken } from '@config/supabase';
 import { Concesionario } from '../concesionarios/concesionario.model';
 import { InteraccionCrm } from '../crm/crm.model';
 import { Expansion } from '../expansiones/expansion.model';
@@ -38,7 +38,7 @@ function validarFechaRango(fechaDesde?: string, fechaHasta?: string): void {
  * datos del concesionario), aperturas del plan y filas de rendimiento
  * agregadas por concesionario.
  */
-export async function getReportes(filters: ReporteFilters = {}): Promise<ReporteData> {
+export async function getReportes(filters: ReporteFilters = {}, token: string): Promise<ReporteData> {
   const concesionarioId = filters.concesionario_id?.trim();
   const estado = filters.estado;
   const ciudad = filters.ciudad?.trim();
@@ -49,8 +49,10 @@ export async function getReportes(filters: ReporteFilters = {}): Promise<Reporte
 
   const hayFiltroConcesionario = Boolean(concesionarioId || estado || ciudad);
 
+  const cliente = getSupabaseConToken(token);
+
   // 1) Concesionarios con filtros combinados (id, estado, ciudad).
-  let queryConcesionarios = supabase
+  let queryConcesionarios = cliente
     .from('concesionarios')
     .select('*', { count: 'exact' })
     .is('deleted_at', null);
@@ -77,7 +79,7 @@ export async function getReportes(filters: ReporteFilters = {}): Promise<Reporte
   // 2) Interacciones del rango (solo si hay concesionarios para filtrar).
   let interacciones: InteraccionCrm[] = [];
   if (!hayFiltroConcesionario || ids.length > 0) {
-    let queryInteracciones = supabase.from('interacciones_crm').select('*');
+    let queryInteracciones = cliente.from('interacciones_crm').select('*');
     if (hayFiltroConcesionario) {
       queryInteracciones = queryInteracciones.in('concesionario_id', ids);
     }
@@ -101,7 +103,7 @@ export async function getReportes(filters: ReporteFilters = {}): Promise<Reporte
   //    concesionarios cuando hay filtros de concesionario).
   let aperturas: Expansion[] = [];
   if (!hayFiltroConcesionario || nombres.length > 0) {
-    let queryAperturas = supabase.from('expansiones').select('*').is('deleted_at', null);
+    let queryAperturas = cliente.from('expansiones').select('*').is('deleted_at', null);
     if (hayFiltroConcesionario) {
       queryAperturas = queryAperturas.in('concesionario', nombres);
     }
