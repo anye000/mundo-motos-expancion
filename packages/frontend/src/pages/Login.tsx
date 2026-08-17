@@ -1,7 +1,7 @@
 import { FormEvent, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Bike, Loader2, LogIn, Lock, User } from 'lucide-react'
+import { Loader2, LogIn, Lock, User } from 'lucide-react'
 import { useAuthStore } from '@store/auth'
 
 interface EstadoUbicacion {
@@ -46,9 +46,11 @@ export function Login() {
     <div className="flex min-h-screen items-center justify-center bg-black px-4 py-10 text-white">
       <div className="w-full max-w-md">
         <div className="flex flex-col items-center gap-3">
-          <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-mm-yellow text-mm-black">
-            <Bike className="h-9 w-9" />
-          </span>
+          <img
+            src="/logo-192.png"
+            alt="Mundo Motos"
+            className="h-16 w-16 rounded-2xl object-contain"
+          />
           <h1 className="text-2xl font-bold text-mm-yellow sm:text-3xl">Mundo Motos CRM</h1>
           <p className="text-sm text-mm-gray-400">
             Sistema de Gestión y Geolocalización de Concesionarios

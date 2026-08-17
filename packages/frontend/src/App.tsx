@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { BrowserRouter as Router, Routes, Route, NavLink, useNavigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import {
-  Bike,
   BarChart3,
   CalendarDays,
   LayoutDashboard,
@@ -55,9 +54,11 @@ function Navegacion() {
       <header className="sticky top-0 z-40 border-b-4 border-mm-yellow bg-black">
         <div className="container mx-auto flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-mm-yellow text-mm-black">
-              <Bike className="h-6 w-6" />
-            </span>
+            <img
+              src="/logo-192.png"
+              alt="Mundo Motos"
+              className="h-10 w-10 shrink-0 rounded-xl object-contain"
+            />
             <div>
               <h1 className="text-lg font-bold leading-tight text-mm-yellow sm:text-xl">
                 Mundo Motos CRM
