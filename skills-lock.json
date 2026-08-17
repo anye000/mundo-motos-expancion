@@ -42,6 +42,12 @@
       "sourceType": "github",
       "skillPath": "skills/cyber-auditor/SKILL.md",
       "computedHash": "1b62b924c5c0af6df766c56e6046f0f446e91f1c305f543255c7e28a6fe59b27"
+    },
+    "diagnosing-bugs": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "skillPath": "skills/engineering/diagnosing-bugs/SKILL.md",
+      "computedHash": "5ee02243034d63ad1aeb7155cbf954d87bdcc75d5045f84b476dda8facec16b5"
     }
   }
 }

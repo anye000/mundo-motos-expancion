@@ -46,8 +46,9 @@ export async function requireAdmin(
       return;
     }
 
-    // Adjuntar user al request para uso posterior
+    // Adjuntar user y token al request para uso posterior
     (req as any).user = user;
+    (req as any).token = token;
     next();
   } catch (error) {
     next(error);

@@ -86,9 +86,12 @@ class ApiService {
           }
         }
         // Si el backend reporta un JWT malformado (ej. 'Expected 3 parts in JWT'),
-        // sanea el token y redirige al login en lugar de reintentar con el mismo valor.
+        // sanea el token y redirige al login — pero solo si NO es un endpoint de
+        // auth/admin (esos manejan sus propios errores sin recargar la SPA).
         const errorMsg: string = error.response?.data?.error || ''
-        if (typeof errorMsg === 'string' && /JWT|token/i.test(errorMsg)) {
+        const url = error.config?.url || ''
+        const esEndpointAuth = url.includes('/auth/') || url.includes('/login')
+        if (typeof errorMsg === 'string' && /JWT|token/i.test(errorMsg) && !esEndpointAuth) {
           const token = localStorage.getItem('authToken')
           if (token) {
             localStorage.removeItem('authToken')
