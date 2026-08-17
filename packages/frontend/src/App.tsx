@@ -20,7 +20,7 @@ import ReportesView from '@components/ReportesView'
 import Login from '@pages/Login'
 import ProtectedRoute from '@components/ProtectedRoute'
 import GestionUsuariosModal from '@components/GestionUsuariosModal'
-import InstallButton from '@components/InstallButton'
+import InstallPWA from '@components/InstallPWA'
 
 interface LinkNav {
   to: string
@@ -168,7 +168,7 @@ function App() {
                     <p>&copy; 2026 Mundo Motos. Todos los derechos reservados.</p>
                   </div>
                 </footer>
-                <InstallButton />
+                <InstallPWA />
               </div>
             </ProtectedRoute>
           }
