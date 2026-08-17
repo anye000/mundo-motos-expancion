@@ -9,7 +9,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+      includeAssets: ['favicon-16.png', 'favicon-32.png', 'apple-touch-icon.png', 'maskable-icon-192x192.png', 'maskable-icon-512x512.png'],
       manifest: {
         name: 'Mundo Motos',
         short_name: 'Mundo Motos',
@@ -24,25 +24,25 @@ export default defineConfig({
         start_url: '/',
         icons: [
           {
-            src: '/logo-192.png',
+            src: '/icon-192x192.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any',
           },
           {
-            src: '/logo-512.png',
+            src: '/icon-512x512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any',
           },
           {
-            src: '/logo-192.png',
+            src: '/maskable-icon-192x192.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'maskable',
           },
           {
-            src: '/logo-512.png',
+            src: '/maskable-icon-512x512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable',
