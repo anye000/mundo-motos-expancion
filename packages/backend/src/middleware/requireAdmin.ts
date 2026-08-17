@@ -8,7 +8,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import { getSupabaseConToken } from '@config/supabase';
-import { sendError } from '@utils/helpers';
+import { sendError, esJwtValido } from '@utils/helpers';
 
 export async function requireAdmin(
   req: Request,
@@ -18,7 +18,7 @@ export async function requireAdmin(
   try {
     const header = req.headers.authorization;
     const token = header?.startsWith('Bearer ') ? header.slice(7) : null;
-    if (!token) {
+    if (!token || !esJwtValido(token)) {
       sendError(res, 'No autorizado', 401);
       return;
     }

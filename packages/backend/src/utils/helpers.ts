@@ -87,6 +87,18 @@ export function extractToken(authHeader?: string): string | null {
 }
 
 /**
+ * Valida la estructura de un JWT (header.payload.signature en base64url).
+ * Previene errores del SDK de Supabase como "Expected 3 parts in JWT; got 1"
+ * cuando el header Authorization llega con un valor corrupto, vacío o plano.
+ */
+export function esJwtValido(token: unknown): token is string {
+  if (typeof token !== 'string') return false
+  const t = token.trim()
+  if (!t || t === 'undefined' || t === 'null') return false
+  return /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(t)
+}
+
+/**
  * Crear un error con status
  */
 export class ApiError extends Error {

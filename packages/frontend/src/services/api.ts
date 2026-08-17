@@ -18,6 +18,20 @@ import {
 import { ReporteData, ReporteFilters } from '../types/reporte'
 import { PerfilUsuario, CrearUsuarioInput } from '../types/auth'
 
+/**
+ * Valida que un string tenga estructura de JWT de Supabase (tres partes
+ * separadas por puntos, codificadas en base64url). Descarta valores
+ * corruptos comunes como "undefined", "null", "" o strings planos sin puntos
+ * que provocan "Expected 3 parts in JWT; got 1" en `auth.getUser()`.
+ */
+function esJwtValido(token: unknown): token is string {
+  if (typeof token !== 'string') return false
+  const t = token.trim()
+  if (!t || t === 'undefined' || t === 'null') return false
+  // JWT: header.payload.signature (todas partes no vacías en base64url)
+  return /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(t)
+}
+
 class ApiService {
   private client: AxiosInstance
 
@@ -32,9 +46,24 @@ class ApiService {
     // Interceptor para agregar token de autenticación
     this.client.interceptors.request.use(
       (config) => {
-        const token = localStorage.getItem('authToken')
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`
+        const url = config.url || ''
+        const esEndpointAuth = url.includes('/auth/') || url.includes('/login')
+        const tokenCrudo = localStorage.getItem('authToken')
+        const tokenValido = esJwtValido(tokenCrudo) ? (tokenCrudo as string) : null
+        if (tokenValido) {
+          config.headers.Authorization = `Bearer ${tokenValido}`
+        } else if (tokenCrudo && !esEndpointAuth) {
+          // Token corrupto/ausente y no es endpoint de auth: sanea el
+          // almacenamiento y redirige al login sin enviar la petición al
+          // backend (evita "Expected 3 parts in JWT; got 1").
+          localStorage.removeItem('authToken')
+          window.location.href = '/login'
+          const controller = new AbortController()
+          controller.abort()
+          config.signal = controller.signal
+        } else if (tokenCrudo) {
+          // Endpoint de auth con token corrupto: solo sanea el almacenamiento.
+          localStorage.removeItem('authToken')
         }
         return config
       },
@@ -52,6 +81,16 @@ class ApiService {
           const esEndpointAuth = url.includes('/auth/') || url.includes('/login')
           const token = localStorage.getItem('authToken')
           if (!esEndpointAuth && token) {
+            localStorage.removeItem('authToken')
+            window.location.href = '/login'
+          }
+        }
+        // Si el backend reporta un JWT malformado (ej. 'Expected 3 parts in JWT'),
+        // sanea el token y redirige al login en lugar de reintentar con el mismo valor.
+        const errorMsg: string = error.response?.data?.error || ''
+        if (typeof errorMsg === 'string' && /JWT|token/i.test(errorMsg)) {
+          const token = localStorage.getItem('authToken')
+          if (token) {
             localStorage.removeItem('authToken')
             window.location.href = '/login'
           }
