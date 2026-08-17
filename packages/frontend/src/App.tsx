@@ -19,6 +19,7 @@ import ReportesView from '@components/ReportesView'
 import Login from '@pages/Login'
 import ProtectedRoute from '@components/ProtectedRoute'
 import GestionUsuariosModal from '@components/GestionUsuariosModal'
+import { ErrorBoundary } from '@components/ErrorBoundary'
 import InstallPWA from '@components/InstallPWA'
 
 interface LinkNav {
@@ -134,7 +135,9 @@ function Navegacion() {
         )}
       </header>
 
-      <GestionUsuariosModal abierto={gestionUsuarios} onCerrar={() => setGestionUsuarios(false)} />
+      <ErrorBoundary mensaje="Error al cargar la gestión de usuarios.">
+        <GestionUsuariosModal abierto={gestionUsuarios} onCerrar={() => setGestionUsuarios(false)} />
+      </ErrorBoundary>
     </>
   )
 }
@@ -148,33 +151,35 @@ function App() {
 
   return (
     <Router>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route
-          path="/*"
-          element={
-            <ProtectedRoute>
-              <div className="flex min-h-screen flex-col bg-black text-white">
-                <Navegacion />
-                <main className="container mx-auto flex-1 px-4 py-8">
-                  <Routes>
-                    <Route path="/" element={<DashboardGerencial />} />
-                    <Route path="/concesionarios" element={<DashboardConcesionarios />} />
-                    <Route path="/expansiones" element={<CronogramaExpansions />} />
-                    <Route path="/reportes" element={<ReportesView />} />
-                  </Routes>
-                </main>
-                <footer className="mt-auto border-t-4 border-mm-yellow bg-black">
-                  <div className="container mx-auto px-4 py-4 text-center text-mm-gray-500">
-                    <p>&copy; 2026 Mundo Motos. Todos los derechos reservados.</p>
-                  </div>
-                </footer>
-                <InstallPWA />
-              </div>
-            </ProtectedRoute>
-          }
-        />
-      </Routes>
+      <ErrorBoundary mensaje="La aplicación encontró un error inesperado.">
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route
+            path="/*"
+            element={
+              <ProtectedRoute>
+                <div className="flex min-h-screen flex-col bg-black text-white">
+                  <Navegacion />
+                  <main className="container mx-auto flex-1 px-4 py-8">
+                    <Routes>
+                      <Route path="/" element={<DashboardGerencial />} />
+                      <Route path="/concesionarios" element={<DashboardConcesionarios />} />
+                      <Route path="/expansiones" element={<CronogramaExpansions />} />
+                      <Route path="/reportes" element={<ReportesView />} />
+                    </Routes>
+                  </main>
+                  <footer className="mt-auto border-t-4 border-mm-yellow bg-black">
+                    <div className="container mx-auto px-4 py-4 text-center text-mm-gray-500">
+                      <p>&copy; 2026 Mundo Motos. Todos los derechos reservados.</p>
+                    </div>
+                  </footer>
+                  <InstallPWA />
+                </div>
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      </ErrorBoundary>
       <Toaster position="top-right" />
     </Router>
   )

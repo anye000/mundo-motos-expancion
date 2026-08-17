@@ -33,9 +33,10 @@ export function GestionUsuariosModal({ abierto, onCerrar }: GestionUsuariosModal
     setError(null)
     try {
       const lista = await apiService.getAuthUsuarios()
-      setUsuarios(lista)
+      setUsuarios(Array.isArray(lista) ? lista : [])
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error al cargar los usuarios')
+      setUsuarios([])
     } finally {
       setCargando(false)
     }
@@ -92,7 +93,7 @@ export function GestionUsuariosModal({ abierto, onCerrar }: GestionUsuariosModal
   }
 
   async function confirmarEliminarUsuario() {
-    if (!confirmarEliminar) return
+    if (!confirmarEliminar?.id) return
     setEliminando(confirmarEliminar.id)
     try {
       await apiService.eliminarUsuario(confirmarEliminar.id)
@@ -265,40 +266,40 @@ export function GestionUsuariosModal({ abierto, onCerrar }: GestionUsuariosModal
               <ul className="flex flex-col gap-2">
                 {usuarios.map((usuario) => (
                   <li
-                    key={usuario.id}
+                    key={usuario?.id ?? Math.random()}
                     className="flex items-center gap-3 rounded-lg border border-mm-gray-700 bg-mm-gray-900 p-3"
                   >
                     <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-mm-yellow text-sm font-bold text-mm-black">
-                      {inicial(usuario.nombre, usuario.username)}
+                      {inicial(usuario?.nombre ?? '', usuario?.username ?? '')}
                     </span>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold text-white">
-                        {usuario.nombre || usuario.username}
+                        {usuario?.nombre || usuario?.username || 'Sin nombre'}
                       </p>
                       <p className="truncate text-xs text-mm-gray-400">
-                        @{usuario.username}
-                        {usuario.emailRespaldo ? ` · ${usuario.emailRespaldo}` : ''}
+                        @{usuario?.username ?? ''}
+                        {usuario?.emailRespaldo ? ` · ${usuario.emailRespaldo}` : ''}
                       </p>
                     </div>
                     <span
                       className={`shrink-0 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
-                        usuario.rol === 'admin'
+                        usuario?.rol === 'admin'
                           ? 'border-mm-yellow/40 bg-mm-yellow/15 text-mm-yellow'
                           : 'border-mm-gray-600 bg-mm-gray-700 text-mm-gray-300'
                       }`}
                     >
-                      {usuario.rol === 'admin' ? 'Administrador' : 'Solo lectura'}
+                      {usuario?.rol === 'admin' ? 'Administrador' : 'Solo lectura'}
                     </span>
-                    {usuario.rol === 'lectura' && (
+                    {usuario?.rol === 'lectura' && (
                       <button
                         type="button"
                         onClick={() => abrirConfirmarEliminar(usuario)}
-                        disabled={eliminando === usuario.id}
+                        disabled={eliminando === usuario?.id}
                         className="rounded-lg border border-mm-error/50 p-1.5 text-mm-error hover:bg-mm-error/10 transition-colors disabled:opacity-50"
-                        aria-label={`Eliminar ${usuario.username}`}
+                        aria-label={`Eliminar ${usuario?.username ?? ''}`}
                         title="Eliminar"
                       >
-                        {eliminando === usuario.id ? (
+                        {eliminando === usuario?.id ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
                           <Trash2 className="h-4 w-4" />
