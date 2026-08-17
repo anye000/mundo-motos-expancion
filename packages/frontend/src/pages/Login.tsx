@@ -47,7 +47,7 @@ export function Login() {
       <div className="w-full max-w-md">
         <div className="flex flex-col items-center gap-3">
           <img
-            src="/logo-mundo-motos.svg"
+            src="/icon-192x192.png"
             alt="Mundo Motos"
             className="h-24 w-auto object-contain sm:h-28"
           />
