@@ -4,6 +4,7 @@ import helmet from 'helmet'
 import compression from 'compression'
 import dotenv from 'dotenv'
 import pinoHttp from 'pino-http'
+import rateLimit from 'express-rate-limit'
 import concesionariosRouter from './modules/concesionarios/concesionario.routes'
 import crmRouter from './modules/crm/crm.routes'
 import usersRouter from './modules/users/user.routes'
@@ -17,6 +18,29 @@ dotenv.config()
 const app: Express = express()
 const PORT = process.env.PORT || 3000
 const NODE_ENV = process.env.NODE_ENV || 'development'
+
+// Rate limiting
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    error: 'Demasiadas peticiones. Intenta nuevamente en unos minutos.',
+  },
+})
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    error: 'Demasiados intentos de autenticación. Intenta nuevamente en unos minutos.',
+  },
+})
 
 // Middleware de seguridad
 app.use(helmet())
@@ -47,12 +71,12 @@ app.get('/health', (_req: Request, res: Response) => {
 })
 
 // API routes
-app.use('/api/v1/concesionarios', concesionariosRouter)
-app.use('/api/v1/crm', crmRouter)
-app.use('/api/v1/users', usersRouter)
-app.use('/api/v1/expansiones', expansionesRouter)
-app.use('/api/v1/reportes', reportesRouter)
-app.use('/api/v1/auth', authRouter)
+app.use('/api/v1/auth', authLimiter, authRouter)
+app.use('/api/v1/concesionarios', apiLimiter, concesionariosRouter)
+app.use('/api/v1/crm', apiLimiter, crmRouter)
+app.use('/api/v1/users', apiLimiter, usersRouter)
+app.use('/api/v1/expansiones', apiLimiter, expansionesRouter)
+app.use('/api/v1/reportes', apiLimiter, reportesRouter)
 
 // API raíz (placeholder informativo)
 app.use('/api/v1', (_req: Request, res: Response) => {
