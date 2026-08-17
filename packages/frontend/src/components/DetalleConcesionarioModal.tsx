@@ -20,7 +20,7 @@ const PESTANAS: { id: Pestana; label: string; icono: typeof History }[] = [
 
 /**
  * Modal de detalle de un concesionario con pestañas: información general,
- * historial de interacciones CRM y línea de tiempo de cambios de estado.
+ * historial de interacciones y línea de tiempo de cambios de estado.
  */
 export function DetalleConcesionarioModal({
   concesionario,

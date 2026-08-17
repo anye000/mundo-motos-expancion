@@ -11,9 +11,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
-        name: 'Mundo Motos CRM',
-        short_name: 'MM CRM',
-        description: 'CRM y Dashboard de gestión y geolocalización de concesionarios Mundo Motos',
+        name: 'Mundo Motos',
+        short_name: 'Mundo Motos',
+        description: 'Dashboard de gestión y geolocalización de concesionarios Mundo Motos',
         lang: 'es',
         dir: 'ltr',
         theme_color: '#000000',

@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "skills": {
+    "analyzing-cyber-kill-chain": {
+      "source": "mukul975/Anthropic-Cybersecurity-Skills",
+      "sourceType": "github",
+      "skillPath": "skills/analyzing-cyber-kill-chain/SKILL.md",
+      "computedHash": "deee84ad5e512a2342c4f2483d5d19a342ba211b5afff4fa56d6af2817cdb732"
+    },
+    "building-automated-malware-submission-pipeline": {
+      "source": "mukul975/Anthropic-Cybersecurity-Skills",
+      "sourceType": "github",
+      "skillPath": "skills/building-automated-malware-submission-pipeline/SKILL.md",
+      "computedHash": "dc8a9f6ec2f53cc5597f112dc7af7f8a6339a000d5cfe584d269d40f8891fd54"
+    },
+    "building-vulnerability-dashboard-with-defectdojo": {
+      "source": "mukul975/Anthropic-Cybersecurity-Skills",
+      "sourceType": "github",
+      "skillPath": "skills/building-vulnerability-dashboard-with-defectdojo/SKILL.md",
+      "computedHash": "7eac8694d162ff808780b838d152e6f43b297924cee0030b2b0b772055155c52"
+    },
+    "building-vulnerability-exception-tracking-system": {
+      "source": "mukul975/Anthropic-Cybersecurity-Skills",
+      "sourceType": "github",
+      "skillPath": "skills/building-vulnerability-exception-tracking-system/SKILL.md",
+      "computedHash": "63c5564c063898c6b69a5f30f776a7a95daa7fa6c914469d39d4b90e08ff3629"
+    },
+    "building-vulnerability-scanning-workflow": {
+      "source": "mukul975/Anthropic-Cybersecurity-Skills",
+      "sourceType": "github",
+      "skillPath": "skills/building-vulnerability-scanning-workflow/SKILL.md",
+      "computedHash": "059b61be71483538b017f21fe7798f356d5b32ec86241e1a939413f1bb726643"
+    },
+    "bypassing-authentication-with-forced-browsing": {
+      "source": "mukul975/Anthropic-Cybersecurity-Skills",
+      "sourceType": "github",
+      "skillPath": "skills/bypassing-authentication-with-forced-browsing/SKILL.md",
+      "computedHash": "d35695ce84f4e8ace81d655f6ac66d07f8fbff5e11d3fb6666cf95e3cda3b5ca"
+    },
+    "cyber-auditor": {
+      "source": "nexoratechnologyceo/automyx-2.5",
+      "sourceType": "github",
+      "skillPath": "skills/cyber-auditor/SKILL.md",
+      "computedHash": "1b62b924c5c0af6df766c56e6046f0f446e91f1c305f543255c7e28a6fe59b27"
+    }
+  }
+}

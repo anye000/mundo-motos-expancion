@@ -1,7 +1,7 @@
 {
   "name": "@mundo-motos/frontend",
   "version": "1.1.0",
-  "description": "Frontend React para CRM y Dashboard Mundo Motos",
+  "description": "Frontend React para Dashboard Mundo Motos",
   "private": true,
   "type": "module",
   "scripts": {

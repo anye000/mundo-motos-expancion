@@ -31,7 +31,7 @@ export interface Ubicacion {
   updatedAt: Date
 }
 
-export interface CRMContact {
+export interface Contacto {
   id: UUID
   nombre: string
   email: string

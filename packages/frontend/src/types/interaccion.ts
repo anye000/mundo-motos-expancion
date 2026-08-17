@@ -1,5 +1,5 @@
 /**
- * Tipos del módulo CRM (interacciones con concesionarios).
+ * Tipos del módulo de interacciones con concesionarios.
  *
  * Reflejan la tabla `interacciones_crm` (snake_case) tal como la devuelve el
  * backend de Mundo Motos.

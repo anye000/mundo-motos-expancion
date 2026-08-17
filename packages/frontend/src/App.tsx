@@ -57,11 +57,11 @@ function Navegacion() {
             <img
               src="/logo-mundo-motos.svg"
               alt="Mundo Motos"
-              className="h-10 w-auto shrink-0 object-contain aspect-square"
+              className="h-10 w-auto shrink-0 object-contain"
             />
             <div>
               <h1 className="text-lg font-bold leading-tight text-mm-yellow sm:text-xl">
-                Mundo Motos CRM
+                Mundo Motos
               </h1>
               <p className="hidden text-xs text-mm-gray-400 md:block">
                 Sistema de Gestión y Geolocalización de Concesionarios
