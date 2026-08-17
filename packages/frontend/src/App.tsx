@@ -57,7 +57,7 @@ function Navegacion() {
             <img
               src="/logo-mundo-motos.svg"
               alt="Mundo Motos"
-              className="h-10 w-10 shrink-0 rounded-xl object-contain"
+              className="h-10 w-10 shrink-0 object-contain"
             />
             <div>
               <h1 className="text-lg font-bold leading-tight text-mm-yellow sm:text-xl">

@@ -49,7 +49,7 @@ export function Login() {
           <img
             src="/logo-mundo-motos.svg"
             alt="Mundo Motos"
-            className="h-16 w-16 rounded-2xl object-contain"
+            className="h-24 w-24 object-contain sm:h-28 sm:w-28"
           />
           <h1 className="text-2xl font-bold text-mm-yellow sm:text-3xl">Mundo Motos</h1>
           <p className="text-sm text-mm-gray-400">
