@@ -10,7 +10,6 @@
 
 import bcrypt from 'bcryptjs';
 import { getSupabaseConToken } from '@config/supabase';
-import { getSupabaseAdmin } from '@config/supabaseAdmin';
 import { ApiError } from '@utils/helpers';
 import { CrearUsuarioInput, PerfilUsuario } from './auth.model';
 
@@ -79,22 +78,26 @@ export async function crearUsuario(input: CrearUsuarioInput, token: string): Pro
 
 /**
  * Elimina un usuario de acceso de solo lectura.
- * Usa el cliente admin (service role) para borrar de auth.users y el trigger
- * limpia public.profiles. Solo admins pueden invocarlo (validado en ruta).
+ * Usa el RPC `eliminar_usuario_auth` (SECURITY DEFINER, solo admin) que borra
+ * de auth.users y public.profiles. No requiere SERVICE ROLE KEY.
  */
 export async function eliminarUsuario(userId: string, token: string): Promise<void> {
   const cliente = getSupabaseConToken(token);
-  const { data: perfil, error: perfilError } = await cliente
-    .from('profiles')
-    .select('id, rol')
-    .eq('id', userId)
-    .maybeSingle();
+  const { error } = await cliente.rpc('eliminar_usuario_auth', {
+    p_user_id: userId,
+  });
 
-  if (perfilError) throw perfilError;
-  if (!perfil) throw new ApiError('Usuario no encontrado', 404);
-  if (perfil.rol === 'admin') throw new ApiError('No se puede eliminar un administrador', 403);
-
-  const admin = getSupabaseAdmin();
-  const { error: authError } = await admin.auth.admin.deleteUser(userId);
-  if (authError) throw new ApiError(authError.message, 500);
+  if (error) {
+    const msg = error.message || '';
+    if (/no_admin/i.test(msg)) {
+      throw new ApiError('Acceso restringido: se requiere rol de administrador', 403);
+    }
+    if (/usuario_no_encontrado/i.test(msg)) {
+      throw new ApiError('Usuario no encontrado', 404);
+    }
+    if (/no_eliminar_admin/i.test(msg)) {
+      throw new ApiError('No se puede eliminar un administrador', 403);
+    }
+    throw new ApiError(msg || 'Error al eliminar el usuario', 500);
+  }
 }
