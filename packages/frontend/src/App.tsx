@@ -56,7 +56,7 @@ function Navegacion() {
         <div className="container mx-auto flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <img
-              src="/logo-mundo-motos.svg"
+              src="/icon-192x192.png"
               alt="Mundo Motos"
               className="h-10 w-auto shrink-0 object-contain"
             />
