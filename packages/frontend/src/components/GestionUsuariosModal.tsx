@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
-import { Eye, EyeOff, Loader2, RefreshCw, ShieldCheck, UserPlus, Users, X } from 'lucide-react'
+import { Eye, EyeOff, Loader2, RefreshCw, ShieldCheck, Trash2, UserPlus, Users, X } from 'lucide-react'
 import { apiService } from '@services/api'
 import { PerfilUsuario } from '../types/auth'
 
@@ -25,6 +25,8 @@ export function GestionUsuariosModal({ abierto, onCerrar }: GestionUsuariosModal
   const [password, setPassword] = useState('')
   const [mostrarPassword, setMostrarPassword] = useState(false)
   const [enviando, setEnviando] = useState(false)
+  const [eliminando, setEliminando] = useState<string | null>(null)
+  const [confirmarEliminar, setConfirmarEliminar] = useState<PerfilUsuario | null>(null)
 
   async function cargar() {
     setCargando(true)
@@ -85,6 +87,25 @@ export function GestionUsuariosModal({ abierto, onCerrar }: GestionUsuariosModal
     }
   }
 
+  function abrirConfirmarEliminar(usuario: PerfilUsuario) {
+    setConfirmarEliminar(usuario)
+  }
+
+  async function confirmarEliminarUsuario() {
+    if (!confirmarEliminar) return
+    setEliminando(confirmarEliminar.id)
+    try {
+      await apiService.eliminarUsuario(confirmarEliminar.id)
+      toast.success('Usuario eliminado correctamente')
+      setConfirmarEliminar(null)
+      await cargar()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Error al eliminar el usuario')
+    } finally {
+      setEliminando(null)
+    }
+  }
+
   if (!abierto) return null
 
   const inicial = (nombre: string, username: string): string => {
@@ -97,10 +118,11 @@ export function GestionUsuariosModal({ abierto, onCerrar }: GestionUsuariosModal
   }
 
   return (
-    <div
-      className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/70 p-4"
-      onClick={onCerrar}
-    >
+    <>
+      <div
+        className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/70 p-4"
+        onClick={onCerrar}
+      >
       <div
         className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl bg-mm-gray-900 border border-mm-gray-600 shadow-xl animate-fadeInDown"
         onClick={(e) => e.stopPropagation()}
@@ -267,14 +289,83 @@ export function GestionUsuariosModal({ abierto, onCerrar }: GestionUsuariosModal
                     >
                       {usuario.rol === 'admin' ? 'Administrador' : 'Solo lectura'}
                     </span>
+                    {usuario.rol === 'lectura' && (
+                      <button
+                        type="button"
+                        onClick={() => abrirConfirmarEliminar(usuario)}
+                        disabled={eliminando === usuario.id}
+                        className="rounded-lg border border-mm-error/50 p-1.5 text-mm-error hover:bg-mm-error/10 transition-colors disabled:opacity-50"
+                        aria-label={`Eliminar ${usuario.username}`}
+                        title="Eliminar"
+                      >
+                        {eliminando === usuario.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-4 w-4" />
+                        )}
+                      </button>
+                    )}
                   </li>
                 ))}
               </ul>
             )}
-          </section>
+</section>
         </div>
       </div>
     </div>
+
+      {confirmarEliminar && (
+        <div
+          className="fixed inset-0 z-[1200] flex items-center justify-center bg-black/70 p-4"
+          onClick={() => setConfirmarEliminar(null)}
+        >
+          <div
+            className="w-full max-w-md rounded-xl bg-mm-gray-900 border border-mm-error/50 shadow-xl animate-fadeInDown"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b-2 border-mm-error px-6 py-4">
+              <div className="flex items-center gap-2">
+                <Trash2 className="h-5 w-5 text-mm-error" />
+                <h2 className="text-lg font-bold text-mm-error">Confirmar eliminación</h2>
+              </div>
+            </div>
+            <div className="px-6 py-5 text-center">
+              <p className="mb-4 text-sm text-mm-gray-300">
+                ¿Estás seguro de que deseas eliminar a <strong className="text-white">
+                  {confirmarEliminar.nombre || confirmarEliminar.username}
+                </strong> (<strong className="text-white">@{confirmarEliminar.username}</strong>)?
+              </p>
+              <p className="mb-6 text-xs text-mm-gray-500">
+                Esta acción es irreversible. El usuario perderá el acceso al sistema.
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setConfirmarEliminar(null)}
+                  disabled={eliminando === confirmarEliminar.id}
+                  className="rounded-lg border border-mm-gray-600 px-4 py-2 text-sm font-semibold text-mm-gray-300 hover:bg-mm-gray-700 transition-colors disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmarEliminarUsuario}
+                  disabled={eliminando === confirmarEliminar.id}
+                  className="flex items-center gap-1.5 rounded-lg bg-mm-error px-4 py-2 text-sm font-bold text-white hover:bg-red-700 disabled:opacity-60 transition-colors"
+                >
+                  {eliminando === confirmarEliminar.id ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4" />
+                  )}
+                  {eliminando === confirmarEliminar.id ? 'Eliminando...' : 'Eliminar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
 

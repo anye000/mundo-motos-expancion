@@ -303,6 +303,14 @@ class ApiService {
     }
     return response.data
   }
+
+  /** DELETE /api/v1/auth/usuarios/:id - elimina un acceso de solo lectura (admin). */
+  async eliminarUsuario(id: string): Promise<void> {
+    const response = await this.delete<void>(`/auth/usuarios/${id}`)
+    if (!response.success) {
+      throw new Error(response.error || 'Error al eliminar el usuario')
+    }
+  }
 }
 
 export const apiService = new ApiService()

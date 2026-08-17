@@ -10,6 +10,7 @@
 
 import bcrypt from 'bcryptjs';
 import { getSupabaseConToken } from '@config/supabase';
+import { getSupabaseAdmin } from '@config/supabaseAdmin';
 import { ApiError } from '@utils/helpers';
 import { CrearUsuarioInput, PerfilUsuario } from './auth.model';
 
@@ -74,4 +75,26 @@ export async function crearUsuario(input: CrearUsuarioInput, token: string): Pro
     email_respaldo: emailRespaldo,
     rol: 'lectura',
   } as PerfilUsuario;
+}
+
+/**
+ * Elimina un usuario de acceso de solo lectura.
+ * Usa el cliente admin (service role) para borrar de auth.users y el trigger
+ * limpia public.profiles. Solo admins pueden invocarlo (validado en ruta).
+ */
+export async function eliminarUsuario(userId: string, token: string): Promise<void> {
+  const cliente = getSupabaseConToken(token);
+  const { data: perfil, error: perfilError } = await cliente
+    .from('profiles')
+    .select('id, rol')
+    .eq('id', userId)
+    .maybeSingle();
+
+  if (perfilError) throw perfilError;
+  if (!perfil) throw new ApiError('Usuario no encontrado', 404);
+  if (perfil.rol === 'admin') throw new ApiError('No se puede eliminar un administrador', 403);
+
+  const admin = getSupabaseAdmin();
+  const { error: authError } = await admin.auth.admin.deleteUser(userId);
+  if (authError) throw new ApiError(authError.message, 500);
 }

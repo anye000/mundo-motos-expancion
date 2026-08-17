@@ -49,6 +49,23 @@ export async function registrarUsuario(
   }
 }
 
+/** DELETE /api/v1/auth/usuarios/:id - elimina un acceso de solo lectura (admin). */
+export async function eliminarUsuario(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const { id } = req.params;
+    if (!id) throw new ApiError('ID de usuario requerido', 400);
+    const token = extraerToken(req);
+    await authService.eliminarUsuario(id, token);
+    sendSuccess(res, null, 'Usuario eliminado');
+  } catch (error) {
+    next(error);
+  }
+}
+
 /** Extrae el Bearer token del header Authorization. */
 function extraerToken(req: Request): string {
   const header = req.headers.authorization;

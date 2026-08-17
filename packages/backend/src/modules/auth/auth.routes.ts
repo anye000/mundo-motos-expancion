@@ -7,11 +7,12 @@
 
 import { Router } from 'express';
 import { requireAdmin } from '@middleware/requireAdmin';
-import { listarUsuarios, registrarUsuario } from './auth.controller';
+import { listarUsuarios, registrarUsuario, eliminarUsuario } from './auth.controller';
 
 const authRouter: Router = Router();
 
 authRouter.get('/usuarios', requireAdmin, listarUsuarios);
 authRouter.post('/registrar', requireAdmin, registrarUsuario);
+authRouter.delete('/usuarios/:id', requireAdmin, eliminarUsuario);
 
 export default authRouter;
