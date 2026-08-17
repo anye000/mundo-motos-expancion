@@ -2,13 +2,12 @@
  * Middleware de autorización: valida el JWT de Supabase del header Authorization
  * y comprueba en `public.profiles` que el usuario tenga rol 'admin'.
  *
- * La consulta del perfil se hace con un cliente autenticado con el token del
- * usuario (identidad real), de modo que RLS permita leer su propio perfil sin
- * depender de la SERVICE ROLE KEY.
+ * Usa el cliente autenticado con el token del usuario para que RLS permita
+ * leer su propio perfil (policy profiles_select_own) sin SERVICE_ROLE_KEY.
  */
 
 import { Request, Response, NextFunction } from 'express';
-import { supabase, getSupabaseConToken } from '@config/supabase';
+import { getSupabaseConToken } from '@config/supabase';
 import { sendError } from '@utils/helpers';
 
 export async function requireAdmin(
@@ -24,20 +23,21 @@ export async function requireAdmin(
       return;
     }
 
-    const { data, error } = await supabase.auth.getUser(token);
-    if (error || !data.user) {
+    // Cliente autenticado con el token del usuario: valida el JWT y permite RLS
+    const cliente = getSupabaseConToken(token);
+
+    // Verificar que el token es válido obteniendo el usuario
+    const { data: { user }, error: userError } = await cliente.auth.getUser();
+    if (userError || !user) {
       sendError(res, 'Sesión inválida o expirada', 401);
       return;
     }
 
-    // Cliente autenticado con el token del usuario: RLS evalúa auth.uid() y el
-    // usuario puede leer su propio perfil (policy profiles_select_own).
-    const cliente = getSupabaseConToken(token);
-
+    // Leer perfil del usuario autenticado (RLS permite leer propio perfil)
     const { data: perfil } = await cliente
       .from('profiles')
       .select('rol')
-      .eq('id', data.user.id)
+      .eq('id', user.id)
       .maybeSingle();
 
     const rol = (perfil?.rol ?? '').toString().trim().toLowerCase();
@@ -46,6 +46,8 @@ export async function requireAdmin(
       return;
     }
 
+    // Adjuntar user al request para uso posterior
+    (req as any).user = user;
     next();
   } catch (error) {
     next(error);

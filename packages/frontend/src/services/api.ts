@@ -45,10 +45,16 @@ class ApiService {
     this.client.interceptors.response.use(
       (response) => response,
       (error) => {
+        // Solo redirigir al login en 401 si NO es una petición de autenticación/admin
+        // y si el usuario tenía sesión iniciada. Evita logout en cascada al verificar permisos.
         if (error.response?.status === 401) {
-          // Token expirado, limpiar y redirigir
-          localStorage.removeItem('authToken')
-          window.location.href = '/login'
+          const url = error.config?.url || ''
+          const esEndpointAuth = url.includes('/auth/') || url.includes('/login')
+          const token = localStorage.getItem('authToken')
+          if (!esEndpointAuth && token) {
+            localStorage.removeItem('authToken')
+            window.location.href = '/login'
+          }
         }
         return Promise.reject(error)
       }
