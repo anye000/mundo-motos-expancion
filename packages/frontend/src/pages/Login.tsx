@@ -47,11 +47,11 @@ export function Login() {
       <div className="w-full max-w-md">
         <div className="flex flex-col items-center gap-3">
           <img
-            src="/logo-192.png"
+            src="/logo-mundo-motos.svg"
             alt="Mundo Motos"
             className="h-16 w-16 rounded-2xl object-contain"
           />
-          <h1 className="text-2xl font-bold text-mm-yellow sm:text-3xl">Mundo Motos CRM</h1>
+          <h1 className="text-2xl font-bold text-mm-yellow sm:text-3xl">Mundo Motos</h1>
           <p className="text-sm text-mm-gray-400">
             Sistema de Gestión y Geolocalización de Concesionarios
           </p>
