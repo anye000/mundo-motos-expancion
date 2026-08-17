@@ -27,7 +27,7 @@ export async function requireAdmin(
     const cliente = getSupabaseConToken(token);
 
     // Verificar que el token es válido obteniendo el usuario
-    const { data: { user }, error: userError } = await cliente.auth.getUser();
+    const { data: { user }, error: userError } = await cliente.auth.getUser(token);
     if (userError || !user) {
       sendError(res, 'Sesión inválida o expirada', 401);
       return;

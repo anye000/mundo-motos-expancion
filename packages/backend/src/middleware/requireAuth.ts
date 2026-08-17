@@ -25,7 +25,7 @@ export async function requireAuth(
 
     const cliente = getSupabaseConToken(token);
 
-    const { data: { user }, error: userError } = await cliente.auth.getUser();
+    const { data: { user }, error: userError } = await cliente.auth.getUser(token);
     if (userError || !user) {
       sendError(res, 'Sesión inválida o expirada', 401);
       return;
