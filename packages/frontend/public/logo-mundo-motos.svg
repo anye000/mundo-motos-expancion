@@ -1,8 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <!-- Mundo Motos - masked icon (simplified for browser address bar) -->
-  <rect width="512" height="512" fill="#000000" rx="64"/>
-  <g transform="translate(256, 240) scale(0.42)">
-    <!-- Left wing outer -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" width="1000" height="1000">
+  <!-- Mundo Motos logo: alas/V sobre fondo negro -->
+  <circle cx="500" cy="500" r="500" fill="#000000"/>
+  
+  <!-- Logo ala/V amarillo, centrado -->
+  <g transform="translate(500, 460)">
+    <!-- Ala izquierda - segmento externo -->
     <polygon points="
       0,140
       -40,80
@@ -17,7 +19,8 @@
       -100,10
       -20,80
     " fill="#FFCC00"/>
-    <!-- Left wing cut 1 -->
+    
+    <!-- Ala izquierda - corte interno 1 (creates gap) -->
     <polygon points="
       -50,60
       -140,-30
@@ -30,7 +33,8 @@
       -80,10
       -30,60
     " fill="#000000"/>
-    <!-- Left wing mid -->
+    
+    <!-- Ala izquierda - segmento medio -->
     <polygon points="
       -60,40
       -160,-50
@@ -43,7 +47,8 @@
       -90,0
       -40,50
     " fill="#FFCC00"/>
-    <!-- Left wing cut 2 -->
+    
+    <!-- Ala izquierda - corte interno 2 -->
     <polygon points="
       -70,20
       -180,-60
@@ -56,7 +61,8 @@
       -100,-10
       -50,30
     " fill="#000000"/>
-    <!-- Left wing inner -->
+    
+    <!-- Ala izquierda - segmento interno -->
     <polygon points="
       -80,0
       -190,-70
@@ -69,7 +75,8 @@
       -110,-20
       -60,10
     " fill="#FFCC00"/>
-    <!-- Right wing outer -->
+    
+    <!-- Ala derecha - segmento externo (mirror) -->
     <polygon points="
       0,140
       40,80
@@ -84,7 +91,8 @@
       100,10
       20,80
     " fill="#FFCC00"/>
-    <!-- Right wing cut 1 -->
+    
+    <!-- Ala derecha - corte interno 1 -->
     <polygon points="
       50,60
       140,-30
@@ -97,7 +105,8 @@
       80,10
       30,60
     " fill="#000000"/>
-    <!-- Right wing mid -->
+    
+    <!-- Ala derecha - segmento medio -->
     <polygon points="
       60,40
       160,-50
@@ -110,7 +119,8 @@
       90,0
       40,50
     " fill="#FFCC00"/>
-    <!-- Right wing cut 2 -->
+    
+    <!-- Ala derecha - corte interno 2 -->
     <polygon points="
       70,20
       180,-60
@@ -123,7 +133,8 @@
       100,-10
       50,30
     " fill="#000000"/>
-    <!-- Right wing inner -->
+    
+    <!-- Ala derecha - segmento interno -->
     <polygon points="
       80,0
       190,-70
