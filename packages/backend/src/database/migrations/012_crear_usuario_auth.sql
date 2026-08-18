@@ -77,7 +77,7 @@ BEGIN
     '00000000-0000-0000-0000-000000000000', v_id, 'authenticated', 'authenticated',
     v_email, v_hash, now(), NULL,
     '', '', '', '', '',
-    NULL, NULL, NULL, NULL, false, false, NULL,
+    '', '', '', '', false, false, NULL,
     jsonb_build_object(
       'provider', 'email',
       'providers', jsonb_build_array('email'),
