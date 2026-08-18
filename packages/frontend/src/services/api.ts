@@ -359,6 +359,23 @@ class ApiService {
       throw new Error(response.error || 'Error al eliminar el usuario')
     }
   }
+
+  /** POST /api/v1/auth/login - inicia sesión con usuario o email + contraseña. */
+  async login(identifier: string, password: string): Promise<{
+    access_token: string
+    refresh_token: string
+    user: PerfilUsuario
+  }> {
+    const response = await this.post<{
+      access_token: string
+      refresh_token: string
+      user: PerfilUsuario
+    }>('/auth/login', { identifier, password })
+    if (!response.success || !response.data) {
+      throw new Error(response.error || 'Usuario o contraseña incorrectos')
+    }
+    return response.data
+  }
 }
 
 export const apiService = new ApiService()

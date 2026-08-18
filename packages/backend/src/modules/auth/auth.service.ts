@@ -9,9 +9,9 @@
  */
 
 import bcrypt from 'bcryptjs';
-import { getSupabaseConToken } from '@config/supabase';
+import { supabase, getSupabaseConToken } from '@config/supabase';
 import { ApiError } from '@utils/helpers';
-import { CrearUsuarioInput, PerfilUsuario } from './auth.model';
+import { CrearUsuarioInput, LoginInput, LoginResponse, PerfilUsuario } from './auth.model';
 
 /** Lista los accesos creados (exclusivo admin). */
 export async function listarUsuarios(token: string): Promise<PerfilUsuario[]> {
@@ -22,6 +22,93 @@ export async function listarUsuarios(token: string): Promise<PerfilUsuario[]> {
     .order('created_at', { ascending: true });
   if (error) throw error;
   return (data as PerfilUsuario[]) ?? [];
+}
+
+/**
+ * Resuelve un identifier (username o email) al email real de Supabase Auth.
+ * Si el identifier contiene '@', se usa directamente como email.
+ * Si no, se busca en `public.profiles` por username y se devuelve el email
+ * interno generado (`username@internal.mundomotos.com`).
+ */
+async function resolverEmail(identifier: string): Promise<string> {
+  if (identifier.includes('@')) {
+    return identifier.trim().toLowerCase();
+  }
+
+  const username = identifier.trim().toLowerCase();
+
+  if (!supabase) {
+    throw new ApiError('Cliente de Supabase no configurado', 500);
+  }
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('email')
+    .ilike('username', username)
+    .maybeSingle();
+
+  if (error) {
+    throw new ApiError('Error al buscar el usuario', 500);
+  }
+
+  if (!data?.email) {
+    throw new ApiError('Usuario o contraseña incorrectos', 401);
+  }
+
+  return data.email;
+}
+
+/**
+ * Inicia sesión validando credenciales contra Supabase Auth.
+ * Acepta tanto email como username; si recibe un username sin '@', lo
+ * traduce al email interno correspondiente antes de llamar a signInWithPassword.
+ */
+export async function login(input: LoginInput): Promise<LoginResponse> {
+  const email = await resolverEmail(input.identifier);
+
+  if (!supabase) {
+    throw new ApiError('Cliente de Supabase no configurado', 500);
+  }
+
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password: input.password,
+  });
+
+  if (error) {
+    const msg = error.message || '';
+    if (/Invalid login credentials|invalid_grant/i.test(msg)) {
+      throw new ApiError('Usuario o contraseña incorrectos', 401);
+    }
+    if (/Email not confirmed/i.test(msg)) {
+      throw new ApiError('Correo no confirmado. Contacta al administrador.', 403);
+    }
+    throw new ApiError(msg || 'Error al iniciar sesión', 500);
+  }
+
+  if (!data.user || !data.session) {
+    throw new ApiError('No se pudo iniciar sesión', 500);
+  }
+
+  const cliente = getSupabaseConToken(data.session.access_token);
+  const { data: perfil } = await cliente
+    .from('profiles')
+    .select('id, email, nombre, rol, username, email_respaldo')
+    .eq('id', data.user.id)
+    .maybeSingle();
+
+  return {
+    access_token: data.session.access_token,
+    refresh_token: data.session.refresh_token,
+    user: {
+      id: data.user.id,
+      email: perfil?.email ?? data.user.email ?? '',
+      nombre: perfil?.nombre ?? '',
+      rol: (perfil?.rol as PerfilUsuario['rol']) ?? 'lectura',
+      username: perfil?.username ?? '',
+      email_respaldo: perfil?.email_respaldo ?? null,
+    },
+  };
 }
 
 /**

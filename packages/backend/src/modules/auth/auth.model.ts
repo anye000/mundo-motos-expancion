@@ -23,3 +23,14 @@ export interface CrearUsuarioInput {
   nombre?: string;
   emailRespaldo?: string;
 }
+
+export interface LoginInput {
+  identifier: string;
+  password: string;
+}
+
+export interface LoginResponse {
+  access_token: string;
+  refresh_token: string;
+  user: PerfilUsuario;
+}

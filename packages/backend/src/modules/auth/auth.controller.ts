@@ -13,6 +13,27 @@ function extraerToken(req: Request): string {
   return (req as any).token as string;
 }
 
+/** POST /api/v1/auth/login - inicia sesión con usuario o email + contraseña. */
+export async function login(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const { identifier, password } = req.body ?? {};
+    if (!identifier || !password) {
+      throw new ApiError('El usuario y la contraseña son obligatorios', 400);
+    }
+    if (typeof identifier !== 'string' || typeof password !== 'string') {
+      throw new ApiError('Datos de entrada inválidos', 400);
+    }
+    const resultado = await authService.login({ identifier, password });
+    sendSuccess(res, resultado, 'Sesión iniciada');
+  } catch (error) {
+    next(error);
+  }
+}
+
 /** GET /api/v1/auth/usuarios - lista los accesos creados (admin). */
 export async function listarUsuarios(
   req: Request,

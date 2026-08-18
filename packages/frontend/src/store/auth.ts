@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { supabase } from '@services/supabase'
+import { apiService } from '@services/api'
 import { PerfilUsuario } from '../types/auth'
 
 /** Limita una promesa con un tiempo máximo; evita que la sesión se quede colgada. */
@@ -30,22 +31,13 @@ async function obtenerPerfil(userId: string): Promise<PerfilUsuario | null> {
   return { ...data, emailRespaldo: data.email_respaldo } as PerfilUsuario
 }
 
-/** Traduce un nombre de usuario al email real (consulta previa a la autenticación). */
-async function resolverEmailPorUsuario(usuario: string): Promise<string | null> {
-  const { data, error } = await supabase.rpc('resolver_email', {
-    p_username: usuario.trim().toLowerCase(),
-  })
-  if (error) return null
-  return (data as string) || null
-}
-
 interface AuthState {
   usuario: PerfilUsuario | null
   inicializado: boolean
   cargando: boolean
   esAdmin: boolean
   inicializar: () => Promise<void>
-  login: (email: string, password: string) => Promise<void>
+  login: (usuario: string, password: string) => Promise<void>
   logout: () => Promise<void>
   refrescarPerfil: () => Promise<void>
 }
@@ -94,16 +86,25 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   login: async (usuario, password) => {
     set({ cargando: true })
     try {
-      const email = await resolverEmailPorUsuario(usuario)
-      if (!email) throw new Error('Usuario o contraseña incorrectos')
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const response = await apiService.post<{
+        access_token: string
+        refresh_token: string
+        user: PerfilUsuario
+      }>('/auth/login', { identifier: usuario, password })
+
+      if (!response.success || !response.data) {
+        throw new Error(response.error || 'Usuario o contraseña incorrectos')
+      }
+
+      const { access_token, refresh_token, user: perfil } = response.data
+
+      // Establecer la sesión en Supabase JS SDK para que getSession/onAuthStateChange funcionen.
+      await supabase.auth.setSession({
+        access_token,
+        refresh_token,
       })
-      if (error) throw error
-      if (!data.user) throw new Error('No se pudo iniciar sesión')
-      const perfil = await obtenerPerfil(data.user.id)
-      localStorage.setItem('authToken', data.session.access_token)
+
+      localStorage.setItem('authToken', access_token)
       set({
         usuario: perfil,
         esAdmin: perfil?.rol === 'admin',
