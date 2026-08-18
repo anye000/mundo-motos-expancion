@@ -20,6 +20,10 @@ const app: Express = express()
 const PORT = process.env.PORT || 3000
 const NODE_ENV = process.env.NODE_ENV || 'development'
 
+// Trust first proxy (necesario para que express-rate-limit lea X-Forwarded-For
+// correctamente detrás del proxy de Render / Docker / Nginx).
+app.set('trust proxy', 1)
+
 // Rate limiting
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -37,6 +41,12 @@ const authLimiter = rateLimit({
   max: 5,
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: (req) => req.ip || req.socket.remoteAddress || 'unknown',
+  handler: (req, _res, _next, options) => {
+    console.error(`🚫 [authLimiter] BLOQUEADO → ${req.method} ${req.originalUrl} desde IP=${req.ip}`)
+    console.error(`   Límite: ${options.max} req / ${options.windowMs / 60000} min`)
+    _res.status(options.statusCode).json(options.message)
+  },
   message: {
     success: false,
     error: 'Demasiados intentos de autenticación. Intenta nuevamente en unos minutos.',
@@ -45,9 +55,15 @@ const authLimiter = rateLimit({
 
 const adminLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 30,
+  max: 300,
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: (req) => req.ip || req.socket.remoteAddress || 'unknown',
+  handler: (req, _res, _next, options) => {
+    console.error(`🚫 [adminLimiter] BLOQUEADO → ${req.method} ${req.originalUrl} desde IP=${req.ip}`)
+    console.error(`   Límite: ${options.max} req / ${options.windowMs / 60000} min`)
+    _res.status(options.statusCode).json(options.message)
+  },
   message: {
     success: false,
     error: 'Demasiadas peticiones administrativas. Intenta nuevamente en unos minutos.',
@@ -83,6 +99,8 @@ app.get('/health', (_req: Request, res: Response) => {
 })
 
 // API routes
+console.log('[Rutas] /api/v1/auth → authLimiter (max 5/15min)')
+console.log('[Rutas] /api/v1/admin → adminLimiter (max 300/15min)')
 app.use('/api/v1/auth', authLimiter, authRouter)
 app.use('/api/v1/admin', adminLimiter, adminRouter)
 app.use('/api/v1/concesionarios', apiLimiter, concesionariosRouter)

@@ -47,7 +47,7 @@ class ApiService {
     this.client.interceptors.request.use(
       (config) => {
         const url = config.url || ''
-        const esEndpointAuth = url.includes('/auth/') || url.includes('/login')
+        const esEndpointAuth = url.includes('/auth/') || url.includes('/admin/') || url.includes('/login')
         const tokenCrudo = localStorage.getItem('authToken')
         const tokenValido = esJwtValido(tokenCrudo) ? (tokenCrudo as string) : null
         if (tokenValido) {
@@ -78,7 +78,7 @@ class ApiService {
         // y si el usuario tenía sesión iniciada. Evita logout en cascada al verificar permisos.
         if (error.response?.status === 401) {
           const url = error.config?.url || ''
-          const esEndpointAuth = url.includes('/auth/') || url.includes('/login')
+        const esEndpointAuth = url.includes('/auth/') || url.includes('/admin/') || url.includes('/login')
           const token = localStorage.getItem('authToken')
           if (!esEndpointAuth && token) {
             localStorage.removeItem('authToken')
@@ -90,7 +90,7 @@ class ApiService {
         // auth/admin (esos manejan sus propios errores sin recargar la SPA).
         const errorMsg: string = error.response?.data?.error || ''
         const url = error.config?.url || ''
-        const esEndpointAuth = url.includes('/auth/') || url.includes('/login')
+        const esEndpointAuth = url.includes('/auth/') || url.includes('/admin/') || url.includes('/login')
         if (typeof errorMsg === 'string' && /JWT|token/i.test(errorMsg) && !esEndpointAuth) {
           const token = localStorage.getItem('authToken')
           if (token) {
@@ -334,27 +334,27 @@ class ApiService {
     return response.data
   }
 
-  /** GET /api/v1/auth/usuarios - lista de accesos (roles) creados (admin). */
+  /** GET /api/v1/admin/usuarios - lista de accesos (roles) creados (admin). */
   async getAuthUsuarios(): Promise<PerfilUsuario[]> {
-    const response = await this.get<PerfilUsuario[]>('/auth/usuarios')
+    const response = await this.get<PerfilUsuario[]>('/admin/usuarios')
     if (!response.success || !response.data) {
       throw new Error(response.error || 'Error al obtener los usuarios de acceso')
     }
     return response.data
   }
 
-  /** POST /api/v1/auth/registrar - crea un acceso de solo lectura (admin). */
+  /** POST /api/v1/admin/usuarios - crea un acceso de solo lectura (admin). */
   async registrarUsuario(input: CrearUsuarioInput): Promise<PerfilUsuario> {
-    const response = await this.post<PerfilUsuario>('/auth/registrar', input)
+    const response = await this.post<PerfilUsuario>('/admin/usuarios', input)
     if (!response.success || !response.data) {
       throw new Error(response.error || 'Error al crear el usuario')
     }
     return response.data
   }
 
-  /** DELETE /api/v1/auth/usuarios/:id - elimina un acceso de solo lectura (admin). */
+  /** DELETE /api/v1/admin/usuarios/:id - elimina un acceso de solo lectura (admin). */
   async eliminarUsuario(id: string): Promise<void> {
-    const response = await this.delete<void>(`/auth/usuarios/${id}`)
+    const response = await this.delete<void>(`/admin/usuarios/${id}`)
     if (!response.success) {
       throw new Error(response.error || 'Error al eliminar el usuario')
     }

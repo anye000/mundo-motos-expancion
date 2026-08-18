@@ -8,10 +8,12 @@
 
 import { Router } from 'express';
 import { requireAdmin } from '@middleware/requireAdmin';
-import { registrarUsuario } from './auth.controller';
+import { registrarUsuario, eliminarUsuario, listarUsuarios } from './auth.controller';
 
 const adminRouter: Router = Router();
 
+adminRouter.get('/usuarios', requireAdmin, listarUsuarios);
 adminRouter.post('/usuarios', requireAdmin, registrarUsuario);
+adminRouter.delete('/usuarios/:id', requireAdmin, eliminarUsuario);
 
 export default adminRouter;
