@@ -11,6 +11,7 @@ import usersRouter from './modules/users/user.routes'
 import expansionesRouter from './modules/expansiones/expansion.routes'
 import reportesRouter from './modules/reportes/reporte.routes'
 import authRouter from './modules/auth/auth.routes'
+import adminRouter from './modules/auth/admin.routes'
 
 // Cargar variables de entorno
 dotenv.config()
@@ -39,6 +40,17 @@ const authLimiter = rateLimit({
   message: {
     success: false,
     error: 'Demasiados intentos de autenticación. Intenta nuevamente en unos minutos.',
+  },
+})
+
+const adminLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    error: 'Demasiadas peticiones administrativas. Intenta nuevamente en unos minutos.',
   },
 })
 
@@ -72,6 +84,7 @@ app.get('/health', (_req: Request, res: Response) => {
 
 // API routes
 app.use('/api/v1/auth', authLimiter, authRouter)
+app.use('/api/v1/admin', adminLimiter, adminRouter)
 app.use('/api/v1/concesionarios', apiLimiter, concesionariosRouter)
 app.use('/api/v1/crm', apiLimiter, crmRouter)
 app.use('/api/v1/users', apiLimiter, usersRouter)

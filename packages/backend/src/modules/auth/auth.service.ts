@@ -45,6 +45,30 @@ export async function crearUsuario(input: CrearUsuarioInput, token: string): Pro
   const hash = bcrypt.hashSync(input.password, 10);
 
   const cliente = getSupabaseConToken(token);
+
+  // Verificación previa de duplicados antes de llamar al RPC
+  const vEmail = `${username}@internal.mundomotos.com`;
+
+  const { data: existenteUsername } = await cliente
+    .from('profiles')
+    .select('id')
+    .ilike('username', username)
+    .maybeSingle();
+
+  if (existenteUsername) {
+    throw new ApiError('El nombre de usuario ya se encuentra registrado', 409);
+  }
+
+  const { data: existenteEmail } = await cliente
+    .from('profiles')
+    .select('id')
+    .eq('email', vEmail)
+    .maybeSingle();
+
+  if (existenteEmail) {
+    throw new ApiError('El correo interno ya se encuentra registrado', 409);
+  }
+
   const { data, error } = await cliente.rpc('crear_usuario_auth', {
     p_username: username,
     p_hash: hash,
