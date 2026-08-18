@@ -6,9 +6,13 @@
  * registro en `auth.users` con `email_confirmed_at` fijado, y el trigger
  * `handle_new_user` crea el perfil. Para listar, usa un cliente autenticado
  * con el token del admin (la policy RLS `profiles_admin_all` permite leerlos).
+ *
+ * La contraseña se envía en texto plano al RPC, que la hashea con
+ * PostgreSQL's native `crypt()` + `gen_salt('bf')` (pgcrypto). Esto
+ * garantiza compatibilidad con GoTrue/Supabase Auth signInWithPassword.
+ * NO usar bcryptjs de JavaScript — produce hashes incompatibles con GoTrue.
  */
 
-import bcrypt from 'bcryptjs';
 import { supabase, getSupabaseConToken } from '@config/supabase';
 import { ApiError } from '@utils/helpers';
 import { CrearUsuarioInput, LoginInput, LoginResponse, PerfilUsuario } from './auth.model';
@@ -64,7 +68,10 @@ async function resolverEmail(identifier: string): Promise<string> {
  * traduce al email interno correspondiente antes de llamar a signInWithPassword.
  */
 export async function login(input: LoginInput): Promise<LoginResponse> {
+  console.log('[login] identifier recibido:', input.identifier);
+
   const email = await resolverEmail(input.identifier);
+  console.log('[login] email resuelto:', email);
 
   if (!supabase) {
     throw new ApiError('Cliente de Supabase no configurado', 500);
@@ -77,6 +84,7 @@ export async function login(input: LoginInput): Promise<LoginResponse> {
 
   if (error) {
     const msg = error.message || '';
+    console.error('[login] signInWithPassword error:', msg, '| status:', error.status);
     if (/Invalid login credentials|invalid_grant/i.test(msg)) {
       throw new ApiError('Usuario o contraseña incorrectos', 401);
     }
@@ -89,6 +97,8 @@ export async function login(input: LoginInput): Promise<LoginResponse> {
   if (!data.user || !data.session) {
     throw new ApiError('No se pudo iniciar sesión', 500);
   }
+
+  console.log('[login] login exitoso para:', data.user.email);
 
   const cliente = getSupabaseConToken(data.session.access_token);
   const { data: perfil } = await cliente
@@ -114,8 +124,8 @@ export async function login(input: LoginInput): Promise<LoginResponse> {
 /**
  * Crea un acceso de solo lectura a partir de un nombre de usuario único.
  * El email interno se genera como `username@internal.mundomotos.com`.
- * La contraseña se hashea con bcrypt en el backend y el RPC la inserta
- * confirmada para que el acceso funcione de inmediato.
+ * La contraseña se envía en texto plano al RPC, que la hashea con
+ * PostgreSQL's native `crypt()` (pgcrypto) para compatibilidad con GoTrue.
  */
 export async function crearUsuario(input: CrearUsuarioInput, token: string): Promise<PerfilUsuario> {
   const nombre = input.nombre?.trim() ?? '';
@@ -128,8 +138,6 @@ export async function crearUsuario(input: CrearUsuarioInput, token: string): Pro
       400
     );
   }
-
-  const hash = bcrypt.hashSync(input.password, 10);
 
   const cliente = getSupabaseConToken(token);
 
@@ -158,7 +166,7 @@ export async function crearUsuario(input: CrearUsuarioInput, token: string): Pro
 
   const { data, error } = await cliente.rpc('crear_usuario_auth', {
     p_username: username,
-    p_hash: hash,
+    p_password: input.password,
     p_nombre: nombre,
     p_email_respaldo: emailRespaldo,
   });

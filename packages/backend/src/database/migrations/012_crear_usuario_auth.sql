@@ -9,14 +9,19 @@
 -- Seguridad:
 --   * Solo un administrador autenticado puede invocarlo (comprueba is_admin()).
 --   * El rol SIEMPRE se fija a 'lectura' (nunca se crean admins por este RPC).
---   * La contraseña llega como hash bcrypt precalculado (bcryptjs en el backend).
+--   * La contraseña se recibe en texto plano y se hashea con PostgreSQL's
+--     native `crypt()` + `gen_salt('bf')` (pgcrypto). Esto garantiza
+--     compatibilidad con GoTrue/Supabase Auth signInWithPassword.
+--     ⚠️ NO usar bcryptjs de JavaScript — produce hashes incompatibles con GoTrue.
 --   * El trigger handle_new_user crea el perfil en public.profiles.
 --
 -- Aplicar en el SQL editor de Supabase.
 
+DROP FUNCTION IF EXISTS public.crear_usuario_auth(text, text, text, text);
+
 CREATE OR REPLACE FUNCTION public.crear_usuario_auth(
   p_username TEXT,
-  p_hash TEXT,
+  p_password TEXT,
   p_nombre TEXT DEFAULT '',
   p_email_respaldo TEXT DEFAULT NULL
 )
@@ -28,6 +33,7 @@ AS $$
 DECLARE
   v_email TEXT;
   v_id UUID;
+  v_hash TEXT;
   v_existe INTEGER;
 BEGIN
   -- Solo administradores pueden crear accesos.
@@ -38,7 +44,7 @@ BEGIN
   IF p_username IS NULL OR NOT (p_username ~ '^[a-z0-9._-]{3,}$') THEN
     RAISE EXCEPTION 'usuario_invalido';
   END IF;
-  IF p_hash IS NULL OR length(p_hash) < 20 THEN
+  IF p_password IS NULL OR length(p_password) < 6 THEN
     RAISE EXCEPTION 'password_invalida';
   END IF;
 
@@ -55,6 +61,9 @@ BEGIN
 
   v_id := gen_random_uuid();
 
+  -- Hash con pgcrypto nativo — compatible con GoTrue's signInWithPassword
+  v_hash := crypt(p_password, gen_salt('bf', 10));
+
   INSERT INTO auth.users (
     instance_id, id, aud, role, email, encrypted_password,
     email_confirmed_at, invited_at,
@@ -66,7 +75,7 @@ BEGIN
     email_change_confirm_status
   ) VALUES (
     '00000000-0000-0000-0000-000000000000', v_id, 'authenticated', 'authenticated',
-    v_email, p_hash, now(), NULL,
+    v_email, v_hash, now(), NULL,
     '', '', '', '', '',
     NULL, NULL, NULL, NULL, false, false, NULL,
     jsonb_build_object(
@@ -87,5 +96,5 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.crear_usuario_auth(TEXT, TEXT, TEXT, TEXT) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.crear_usuario_auth(TEXT, TEXT, TEXT, TEXT) TO authenticated;
+REVOKE ALL ON FUNCTION public.crear_usuario_auth(text, text, text, text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.crear_usuario_auth(text, text, text, text) TO authenticated;
