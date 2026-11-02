@@ -34,6 +34,18 @@ function validarFechaRango(fechaDesde?: string, fechaHasta?: string): void {
 }
 
 /**
+ * Normaliza el límite superior del rango para columnas `timestamptz`
+ * (ej. `created_at`). Supabase/PostgREST interpreta "2026-12-31" como
+ * medianoche UTC del día, lo que descartaría todo lo ocurrido después de
+ * esa hora. Se rellena hasta el cierre del día (23:59:59.999Z) para que el
+ * rango "hasta" incluya el día completo. Valores que ya traen hora pasan
+ * tal cual.
+ */
+function limiteDiaCompleto(fechaHasta: string): string {
+  return /^\d{4}-\d{2}-\d{2}$/.test(fechaHasta) ? `${fechaHasta}T23:59:59.999Z` : fechaHasta;
+}
+
+/**
  * Genera el reporte combinado: concesionarios filtrados, interacciones (con
  * datos del concesionario), aperturas del plan y filas de rendimiento
  * agregadas por concesionario.
@@ -87,7 +99,7 @@ export async function getReportes(filters: ReporteFilters = {}, token: string): 
       queryInteracciones = queryInteracciones.gte('created_at', fechaDesde);
     }
     if (fechaHasta) {
-      queryInteracciones = queryInteracciones.lte('created_at', fechaHasta);
+      queryInteracciones = queryInteracciones.lte('created_at', limiteDiaCompleto(fechaHasta));
     }
     const { data, error } = await queryInteracciones
       .order('created_at', { ascending: false })
@@ -99,13 +111,18 @@ export async function getReportes(filters: ReporteFilters = {}, token: string): 
     interacciones = data ?? [];
   }
 
-  // 3) Aperturas del plan en el rango (filtradas por los nombres de los
-  //    concesionarios cuando hay filtros de concesionario).
+  // 3) Aperturas del plan en el rango. La ciudad se propaga también a
+  //    `expansiones` (columna propia) para que el cruce sea consistente con
+  //    el filtro aplicado a `concesionarios`. Cuando hay filtro de
+  //    concesionario se cruza por `concesionario_id` (FK real) y, para filas
+  //    huérfanas (concesionario_id nulo), por coincidencia exacta de nombre
+  //    en JS; filtrar por nombre en la lista de Supabase es frágil con
+  //    nombres que contienen comas y no distingue homónimos.
   let aperturas: Expansion[] = [];
-  if (!hayFiltroConcesionario || nombres.length > 0) {
+  if (!hayFiltroConcesionario || ids.length > 0) {
     let queryAperturas = cliente.from('expansiones').select('*').is('deleted_at', null);
-    if (hayFiltroConcesionario) {
-      queryAperturas = queryAperturas.in('concesionario', nombres);
+    if (ciudad) {
+      queryAperturas = queryAperturas.ilike('ciudad', `%${ciudad}%`);
     }
     if (fechaDesde) {
       queryAperturas = queryAperturas.gte('fecha_apertura', fechaDesde);
@@ -121,6 +138,13 @@ export async function getReportes(filters: ReporteFilters = {}, token: string): 
       throw mapSupabaseError(error, 'Error al obtener las aperturas');
     }
     aperturas = data ?? [];
+    if (hayFiltroConcesionario) {
+      aperturas = aperturas.filter(
+        (e) =>
+          (e.concesionario_id != null && ids.includes(e.concesionario_id)) ||
+          nombres.includes(e.concesionario)
+      );
+    }
   }
 
   // 4) Agregación de rendimiento en JS (datos pequeños: sin N+1 perceptible).
@@ -131,16 +155,26 @@ export async function getReportes(filters: ReporteFilters = {}, token: string): 
     actuales.push(interaccion);
     interaccionesPorConcesionario.set(interaccion.concesionario_id, actuales);
   }
+
+  // Cada apertura se indexa una sola vez: por su FK `concesionario_id` si
+  // está poblada, o por nombre exacto si viene huérfana (datos antiguos).
   const aperturasPorConcesionario = new Map<string, Expansion[]>();
   for (const apertura of aperturas) {
-    const actuales = aperturasPorConcesionario.get(apertura.concesionario) ?? [];
+    const clave = apertura.concesionario_id
+      ? `id:${apertura.concesionario_id}`
+      : `nom:${apertura.concesionario}`;
+    const actuales = aperturasPorConcesionario.get(clave) ?? [];
     actuales.push(apertura);
-    aperturasPorConcesionario.set(apertura.concesionario, actuales);
+    aperturasPorConcesionario.set(clave, actuales);
   }
+  const aperturasDe = (concesionario: Concesionario): Expansion[] =>
+    aperturasPorConcesionario.get(`id:${concesionario.id}`) ??
+    aperturasPorConcesionario.get(`nom:${concesionario.nombre}`) ??
+    [];
 
   const rendimiento: FilaRendimiento[] = lista.map((concesionario) => {
     const inters = interaccionesPorConcesionario.get(concesionario.id) ?? [];
-    const exps = aperturasPorConcesionario.get(concesionario.nombre) ?? [];
+    const exps = aperturasDe(concesionario);
     const completadas = exps.filter((e) => e.estado === 'completado').length;
     const enEjecucion = exps.filter((e) => e.estado === 'en_ejecucion').length;
     const sumaAvances = exps.reduce((acc, e) => acc + e.avance, 0);

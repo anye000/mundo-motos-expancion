@@ -29,6 +29,13 @@ const TIPO_INTERACCION_LABEL: Record<TipoInteraccion, string> = {
   incidencia: 'Incidencia',
 }
 
+const TIPO_EXPANSION_LABEL: Record<string, string> = {
+  apertura: 'Apertura',
+  ampliacion: 'Ampliación',
+  relocalizacion: 'Relocalización',
+  otro: 'Otro',
+}
+
 const ESTADO_EXPANSION_LABEL: Record<EstadoExpansion, string> = {
   proximo: 'Próximo',
   en_ejecucion: 'En ejecución',
@@ -57,7 +64,7 @@ const FILTROS_INICIALES: FiltrosReportes = {
   mesHasta: '',
 }
 
-type Pestana = 'interacciones' | 'aperturas' | 'rendimiento'
+type Pestana = 'concesionarios' | 'interacciones' | 'aperturas' | 'rendimiento'
 
 interface ColumnaCSV {
   clave: string
@@ -117,7 +124,7 @@ export function ReportesView() {
     recargar: recargarConcesionarios,
   } = useConcesionarios()
   const [filtros, setFiltros] = useState<FiltrosReportes>(FILTROS_INICIALES)
-  const [pestana, setPestana] = useState<Pestana>('interacciones')
+  const [pestana, setPestana] = useState<Pestana>('concesionarios')
   const [usuarios, setUsuarios] = useState<Usuario[]>([])
 
   useEffect(() => {
@@ -183,6 +190,21 @@ export function ReportesView() {
     return usuario ? `${usuario.nombre} ${usuario.apellido}` : '—'
   }
 
+  const filasConcesionarios = useMemo(
+    () =>
+      (datos?.concesionarios ?? []).map((c) => ({
+        nombre: c.nombre,
+        ciudad: c.ciudad,
+        departamento: c.departamento,
+        estado: ESTADO_LABEL[c.estado as EstadoOperativo] ?? c.estado,
+        fecha_apertura_programada: c.fecha_apertura_programada
+          ? format(parseISO(c.fecha_apertura_programada), 'dd/MM/yyyy')
+          : '—',
+        tipo_expansion: TIPO_EXPANSION_LABEL[c.tipo_expansion] ?? c.tipo_expansion,
+      })),
+    [datos]
+  )
+
   const filasInteracciones = useMemo(
     () =>
       (datos?.interacciones ?? []).map((i) => ({
@@ -230,6 +252,14 @@ export function ReportesView() {
     [datos]
   )
 
+  const columnasConcesionarios: ColumnaCSV[] = [
+    { clave: 'nombre', encabezado: 'Concesionario' },
+    { clave: 'ciudad', encabezado: 'Ciudad' },
+    { clave: 'departamento', encabezado: 'Departamento' },
+    { clave: 'estado', encabezado: 'Estado' },
+    { clave: 'fecha_apertura_programada', encabezado: 'Fecha apertura programada' },
+    { clave: 'tipo_expansion', encabezado: 'Tipo de expansión' },
+  ]
   const columnasInteracciones: ColumnaCSV[] = [
     { clave: 'fecha', encabezado: 'Fecha' },
     { clave: 'tipo', encabezado: 'Tipo' },
@@ -299,7 +329,7 @@ export function ReportesView() {
           Reportes <span className="text-mm-yellow">2026</span>
         </h2>
         <p className="text-sm text-mm-gray-400">
-          Filtra interacciones, aperturas y rendimiento comercial por concesionario, estado,
+          Filtra concesionarios, aperturas y rendimiento comercial por concesionario, estado,
           ciudad y rangos de semanas/meses del año 2026.
         </p>
       </section>
@@ -461,6 +491,7 @@ export function ReportesView() {
           <div className="flex gap-1 rounded-xl border border-mm-gray-700 bg-mm-gray-800 p-1">
             {(
               [
+                ['concesionarios', 'Concesionarios'],
                 ['interacciones', 'Interacciones'],
                 ['aperturas', 'Aperturas'],
                 ['rendimiento', 'Rendimiento'],
@@ -483,7 +514,9 @@ export function ReportesView() {
           <button
             type="button"
             onClick={() => {
-              if (pestana === 'interacciones') {
+              if (pestana === 'concesionarios') {
+                descargarCSV('reporte-concesionarios.csv', columnasConcesionarios, filasConcesionarios)
+              } else if (pestana === 'interacciones') {
                 descargarCSV('reporte-interacciones.csv', columnasInteracciones, filasInteracciones)
               } else if (pestana === 'aperturas') {
                 descargarCSV('reporte-aperturas.csv', columnasAperturas, filasAperturas)
@@ -503,6 +536,12 @@ export function ReportesView() {
             <Loader2 className="h-5 w-5 animate-spin text-mm-yellow" />
             Cargando reporte...
           </div>
+        ) : pestana === 'concesionarios' ? (
+          <TablaReporte
+            columnas={columnasConcesionarios}
+            filas={filasConcesionarios}
+            vacio="No hay concesionarios que coincidan con los filtros."
+          />
         ) : pestana === 'interacciones' ? (
           <TablaReporte
             columnas={columnasInteracciones}
