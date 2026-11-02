@@ -18,6 +18,7 @@ import { MapaConcesionarios } from '@components/MapaConcesionarios'
 import { ConcesionarioModal } from '@components/ConcesionarioModal'
 import { ConfirmarEliminacionModal } from '@components/ConfirmarEliminacionModal'
 import { DetalleConcesionarioModal } from '@components/DetalleConcesionarioModal'
+import { ImagenSegura } from '@components/ImagenSegura'
 import { Concesionario, EstadoOperativo } from '../types/concesionario'
 import { ESTADO_BADGE, ESTADO_LABEL, ORDEN_ESTADOS } from '@utils/estadosConcesionario'
 
@@ -266,7 +267,7 @@ export function DashboardConcesionarios() {
                         }`}
                       >
                         {concesionario.image_url ? (
-                          <img
+                          <ImagenSegura
                             src={concesionario.image_url}
                             alt={concesionario.nombre}
                             className="h-9 w-9 shrink-0 rounded-lg object-cover border border-mm-gray-600"

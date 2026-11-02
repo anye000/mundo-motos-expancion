@@ -3,6 +3,7 @@ import { Building2, History, Mail, MapPin, MessagesSquare, Phone, X } from 'luci
 import { Concesionario } from '../types/concesionario'
 import { HistorialInteracciones } from '@components/HistorialInteracciones'
 import { HistorialEstados } from '@components/HistorialEstados'
+import { ImagenSegura } from '@components/ImagenSegura'
 import { ESTADO_BADGE, ESTADO_LABEL } from '@utils/estadosConcesionario'
 
 export interface DetalleConcesionarioModalProps {
@@ -46,7 +47,7 @@ export function DetalleConcesionarioModal({
         <div className="flex items-center justify-between border-b-2 border-mm-yellow px-6 py-4">
           <div className="flex items-center gap-2">
             {concesionario.image_url ? (
-              <img
+              <ImagenSegura
                 src={concesionario.image_url}
                 alt={concesionario.nombre}
                 className="h-8 w-8 rounded-lg object-cover border border-mm-gray-600"
@@ -95,7 +96,7 @@ export function DetalleConcesionarioModal({
                   aria-label={`Ampliar foto de ${concesionario.nombre}`}
                   title="Ver en tamaño completo"
                 >
-                  <img
+                  <ImagenSegura
                     src={concesionario.image_url}
                     alt={concesionario.nombre}
                     className="h-40 w-full max-w-xs rounded-lg object-cover sm:h-48"
@@ -200,7 +201,7 @@ export function DetalleConcesionarioModal({
           >
             <X className="h-6 w-6" />
           </button>
-          <img
+          <ImagenSegura
             src={concesionario.image_url}
             alt={`${concesionario.nombre} - tamaño completo`}
             className="max-h-[92vh] max-w-full rounded-xl object-contain shadow-2xl"
