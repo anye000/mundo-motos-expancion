@@ -177,7 +177,14 @@ export async function getReportes(filters: ReporteFilters = {}, token: string): 
     const exps = aperturasDe(concesionario);
     const completadas = exps.filter((e) => e.estado === 'completado').length;
     const enEjecucion = exps.filter((e) => e.estado === 'en_ejecucion').length;
-    const sumaAvances = exps.reduce((acc, e) => acc + e.avance, 0);
+    // Avance derivado del estado operativo: completado = 100, proximo = 0,
+    // en_ejecucion conserva el avance registrado (editable).
+    const avanceDeExpansion = (e: Expansion): number => {
+      if (e.estado === 'completado') return 100;
+      if (e.estado === 'proximo') return 0;
+      return e.avance ?? 0;
+    };
+    const sumaAvances = exps.reduce((acc, e) => acc + avanceDeExpansion(e), 0);
     const avancePromedio = exps.length > 0 ? sumaAvances / exps.length : 0;
     return {
       concesionario_id: concesionario.id,

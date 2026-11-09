@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 import {
@@ -69,6 +70,26 @@ type Pestana = 'concesionarios' | 'interacciones' | 'aperturas' | 'rendimiento'
 interface ColumnaCSV {
   clave: string
   encabezado: string
+  celda?: (valor: unknown) => ReactNode
+}
+
+/** Badge de avance con la paleta corporativa (amarillo en curso, negro/gris pendiente, éxito completado). */
+function claseAvance(valor: unknown): string {
+  const n = Number(valor)
+  if (!Number.isFinite(n)) return 'bg-mm-gray-700/50 text-mm-gray-400 border-mm-gray-600'
+  if (n === 100) return 'bg-mm-success/20 text-mm-success border-mm-success/30'
+  if (n > 0) return 'bg-mm-warning/20 text-mm-warning border-mm-warning/30'
+  return 'bg-mm-gray-700/50 text-mm-gray-400 border-mm-gray-600'
+}
+
+function celdaAvance(valor: unknown): ReactNode {
+  const n = Number(valor)
+  if (!Number.isFinite(n)) return '—'
+  return (
+    <span className={`inline-flex items-center gap-1 rounded border px-2 py-0.5 text-xs font-bold ${claseAvance(n)}`}>
+      {n}%
+    </span>
+  )
 }
 
 function TablaReporte({
@@ -104,7 +125,7 @@ function TablaReporte({
             <tr key={indice} className="transition-colors hover:bg-mm-gray-900">
               {columnas.map((c) => (
                 <td key={c.clave} className="px-3 py-2.5 text-mm-gray-200">
-                  {String(fila[c.clave] ?? '')}
+                  {c.celda ? c.celda(fila[c.clave]) : String(fila[c.clave] ?? '')}
                 </td>
               ))}
             </tr>
@@ -227,7 +248,7 @@ export function ReportesView() {
         locacion: e.locacion,
         fecha_apertura: format(parseISO(e.fecha_apertura), 'dd/MM/yyyy'),
         estado: ESTADO_EXPANSION_LABEL[e.estado],
-        avance: `${e.avance}%`,
+        avance: e.avance,
         observaciones: e.observaciones ?? '',
       })),
     [datos]
@@ -247,7 +268,7 @@ export function ReportesView() {
         aperturas_programadas: r.aperturas_programadas,
         aperturas_completadas: r.aperturas_completadas,
         aperturas_en_ejecucion: r.aperturas_en_ejecucion,
-        avance_promedio: `${r.avance_promedio.toFixed(1)}%`,
+        avance_promedio: r.avance_promedio,
       })),
     [datos]
   )
@@ -274,7 +295,7 @@ export function ReportesView() {
     { clave: 'locacion', encabezado: 'Locación' },
     { clave: 'fecha_apertura', encabezado: 'Fecha apertura' },
     { clave: 'estado', encabezado: 'Estado' },
-    { clave: 'avance', encabezado: 'Avance' },
+    { clave: 'avance', encabezado: 'Avance', celda: celdaAvance },
     { clave: 'observaciones', encabezado: 'Observaciones' },
   ]
   const columnasRendimiento: ColumnaCSV[] = [
@@ -287,7 +308,7 @@ export function ReportesView() {
     { clave: 'aperturas_programadas', encabezado: 'Aperturas programadas' },
     { clave: 'aperturas_completadas', encabezado: 'Aperturas completadas' },
     { clave: 'aperturas_en_ejecucion', encabezado: 'En ejecución' },
-    { clave: 'avance_promedio', encabezado: 'Avance promedio' },
+    { clave: 'avance_promedio', encabezado: 'Avance promedio', celda: celdaAvance },
   ]
 
   function descargarCSV(

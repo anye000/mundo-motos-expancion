@@ -13,8 +13,21 @@ import {
 } from '@utils/geocodificacion'
 import { resolverCoordenadasGoogleMaps } from '@utils/enlaceGoogleMaps'
 import { iconoConcesionario } from '@components/MapaConcesionarios'
-import { Concesionario, EstadoOperativo, TipoExpansion } from '../types/concesionario'
+import {
+  Concesionario,
+  EstadoOperativo,
+  TipoExpansion,
+  TipoInversion,
+  HitoApertura,
+} from '../types/concesionario'
 import { ESTADO_LABEL, ORDEN_ESTADOS } from '@utils/estadosConcesionario'
+
+const TIPO_INVERSION: TipoInversion[] = ['Lite-25K', 'Mid-35K', 'Max-50K']
+const ETIQUETA_TIER: Record<TipoInversion, string> = {
+  'Lite-25K': 'Lite — $25K',
+  'Mid-35K': 'Mid — $35K',
+  'Max-50K': 'Max — $50K',
+}
 
 interface FormConcesionario {
   nombre: string
@@ -30,6 +43,10 @@ interface FormConcesionario {
   estado: EstadoOperativo
   fecha_apertura_programada: string
   tipo_expansion: string
+  /** Control financiero y operativo del plan 2026. */
+  tier_inversion: TipoInversion | ''
+  monto_inversion: string
+  hitos_apertura: { hito: string; completado: boolean }[]
 }
 
 const FORM_INICIAL: FormConcesionario = {
@@ -46,6 +63,9 @@ const FORM_INICIAL: FormConcesionario = {
   estado: 'activo',
   fecha_apertura_programada: '',
   tipo_expansion: 'apertura',
+  tier_inversion: '',
+  monto_inversion: '',
+  hitos_apertura: [],
 }
 
 /** Captura clics en el mini-mapa para fijar las coordenadas. */
@@ -117,6 +137,9 @@ function aFormulario(concesionario: Concesionario): FormConcesionario {
     estado: concesionario.estado,
     fecha_apertura_programada: concesionario.fecha_apertura_programada ?? '',
     tipo_expansion: concesionario.tipo_expansion,
+    tier_inversion: concesionario.tier_inversion ?? '',
+    monto_inversion: concesionario.monto_inversion != null ? String(concesionario.monto_inversion) : '',
+    hitos_apertura: concesionario.hitos_apertura ?? [],
   }
 }
 
@@ -188,6 +211,28 @@ export function ConcesionarioModal({
   }, [enlaceMaps])
 
   if (!abierto) return null
+
+  function actualizarHito(idx: number, campo: 'hito' | 'completado', valor: string | boolean) {
+    setForm((prev) => {
+      const copia = [...prev.hitos_apertura]
+      copia[idx] = { ...copia[idx], [campo]: valor }
+      return { ...prev, hitos_apertura: copia }
+    })
+  }
+
+  function eliminarHito(idx: number) {
+    setForm((prev) => ({
+      ...prev,
+      hitos_apertura: prev.hitos_apertura.filter((_, i) => i !== idx),
+    }))
+  }
+
+  function agregarHito() {
+    setForm((prev) => ({
+      ...prev,
+      hitos_apertura: [...prev.hitos_apertura, { hito: '', completado: false }],
+    }))
+  }
 
   function actualizar(campo: keyof FormConcesionario, valor: string) {
     setForm((prev) => ({ ...prev, [campo]: valor }))
@@ -291,6 +336,13 @@ export function ConcesionarioModal({
       setError('Ingresa coordenadas válidas (usa el mapa o los campos lat/lng)')
       return
     }
+    if (form.monto_inversion.trim() !== '') {
+      const monto = Number(form.monto_inversion)
+      if (Number.isNaN(monto) || monto < 0) {
+        setError('El monto de inversión debe ser un número válido mayor o igual a 0')
+        return
+      }
+    }
     const esEstadoExpansion = ['proximo', 'en_ejecucion', 'completado'].includes(form.estado)
     if (esEstadoExpansion && !form.fecha_apertura_programada) {
       setError('La fecha de apertura programada es obligatoria para estados de expansión')
@@ -314,6 +366,9 @@ export function ConcesionarioModal({
         estado: form.estado,
         fecha_apertura_programada: esEstadoExpansion ? form.fecha_apertura_programada : null,
         tipo_expansion: form.tipo_expansion as TipoExpansion,
+        tier_inversion: form.tier_inversion || null,
+        monto_inversion: form.monto_inversion ? Number(form.monto_inversion) : null,
+        hitos_apertura: form.hitos_apertura,
       }
       const guardado = concesionario
         ? await apiService.updateConcesionario(concesionario.id, payload)
@@ -501,6 +556,73 @@ export function ConcesionarioModal({
                 </label>
               </>
             )}
+            {/* Inversión y hitos de apertura (plan 2026) */}
+            <label className="block">
+              <span className="mb-1 block text-sm font-medium text-mm-gray-300">Nivel de inversión</span>
+              <select
+                className="input-dark"
+                value={form.tier_inversion}
+                onChange={(e) => actualizar('tier_inversion', e.target.value)}
+              >
+                <option value="">Selecciona un nivel</option>
+                {TIPO_INVERSION.map((t) => (
+                  <option key={t} value={t}>
+                    {ETIQUETA_TIER[t]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-sm font-medium text-mm-gray-300">
+                Monto de inversión
+              </span>
+              <input
+                className="input-dark"
+                value={form.monto_inversion}
+                onChange={(e) => actualizar('monto_inversion', e.target.value)}
+                type="number"
+                min="0"
+                step="1000"
+                placeholder="0"
+              />
+            </label>
+            <label className="block sm:col-span-2">
+              <span className="mb-1 block text-sm font-medium text-mm-gray-300">
+                Hitos de apertura
+              </span>
+              <div className="space-y-2">
+                {form.hitos_apertura.map((h, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <input
+                      className="input-dark flex-1"
+                      value={h.hito}
+                      onChange={(e) => actualizarHito(idx, 'hito', e.target.value)}
+                      placeholder="Ej. Cimiento"
+                    />
+                    <input
+                      type="checkbox"
+                      className="rounded"
+                      checked={h.completado}
+                      onChange={() => actualizarHito(idx, 'completado', !h.completado)}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => eliminarHito(idx)}
+                      className="text-xs text-mm-error hover:underline"
+                    >
+                      Eliminar
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={agregarHito}
+                  className="text-xs font-semibold text-mm-yellow hover:underline mt-1"
+                >
+                  + Agregar hito
+                </button>
+              </div>
+            </label>
             <label className="block">
               <span className="mb-1 block text-sm font-medium text-mm-gray-300">Ciudad *</span>
               <input

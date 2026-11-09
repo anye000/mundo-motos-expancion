@@ -11,6 +11,15 @@ export type EstadoOperativo =
 
 export type TipoExpansion = 'apertura' | 'ampliacion' | 'relocalizacion' | 'otro';
 
+/** Niveles de inversión habilitados para el plan de expansión 2026. */
+export type TipoInversion = 'Lite-25K' | 'Mid-35K' | 'Max-50K';
+
+/** Hito individual del control de apertura por etapas. */
+export interface HitoApertura {
+  hito: string;
+  completado: boolean;
+}
+
 export interface Concesionario {
   id: string;
   nombre: string;
@@ -29,6 +38,12 @@ export interface Concesionario {
   tipo_expansion: string;
   metadatos: Record<string, unknown> | null;
   image_url?: string | null;
+  /** Nivel de inversión asignado al concesionario (plan 2026). */
+  tier_inversion: TipoInversion | null;
+  /** Monto de inversión asignado (moneda local). */
+  monto_inversion: number | null;
+  /** Hitos de apertura completados/pendientes (etapas de la obra). */
+  hitos_apertura: HitoApertura[] | null;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
@@ -50,6 +65,9 @@ export interface CreateConcesionarioInput {
   fecha_apertura_programada?: string | null;
   tipo_expansion?: TipoExpansion;
   metadatos?: Record<string, unknown> | null;
+  tier_inversion?: TipoInversion | null;
+  monto_inversion?: number | null;
+  hitos_apertura?: HitoApertura[] | null;
 }
 
 export interface UpdateConcesionarioInput {
@@ -68,6 +86,9 @@ export interface UpdateConcesionarioInput {
   fecha_apertura_programada?: string | null;
   tipo_expansion?: TipoExpansion;
   metadatos?: Record<string, unknown> | null;
+  tier_inversion?: TipoInversion | null;
+  monto_inversion?: number | null;
+  hitos_apertura?: HitoApertura[] | null;
 }
 
 export interface ConcesionarioFilters {

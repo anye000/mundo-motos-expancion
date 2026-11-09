@@ -17,6 +17,8 @@ import {
   PaginatedConcesionarios,
   EstadoOperativo,
   HistorialEstado,
+  TipoInversion,
+  HitoApertura,
 } from './concesionario.model';
 import { sincronizarExpansion } from '../expansiones/expansion.service';
 import { subirImagen } from '../../services/imgbb.service';
@@ -43,6 +45,46 @@ function isTipoExpansion(value: unknown): value is TipoExpansion {
   return (
     typeof value === 'string' && (TIPOS_EXPANSION_VALIDOS as readonly string[]).includes(value)
   );
+}
+
+const TIPOS_INVERSION_VALIDOS = ['Lite-25K', 'Mid-35K', 'Max-50K'] as const;
+type TipoInversionServicio = (typeof TIPOS_INVERSION_VALIDOS)[number];
+
+function isTipoInversion(value: unknown): value is TipoInversionServicio {
+  return typeof value === 'string' && (TIPOS_INVERSION_VALIDOS as readonly string[]).includes(value);
+}
+
+function validateMontoInversion(value: unknown): number | null {
+  if (value === undefined || value === null || value === '') {
+    return null;
+  }
+  const monto = Number(value);
+  if (Number.isNaN(monto) || monto < 0) {
+    throw new ApiError('El campo "monto_inversion" debe ser un número mayor o igual a 0', 400);
+  }
+  return monto;
+}
+
+function validateHitosApertura(value: unknown): HitoApertura[] | null {
+  if (value === undefined || value === null) {
+    return null;
+  }
+  if (!Array.isArray(value)) {
+    throw new ApiError('El campo "hitos_apertura" debe ser un arreglo', 400);
+  }
+  const hitos: HitoApertura[] = [];
+  value.forEach((h, i) => {
+    if (!h || typeof h !== 'object') {
+      throw new ApiError(`El hito ${i + 1} es inválido`, 400);
+    }
+    const hit = h as Record<string, unknown>;
+    const nombre = typeof hit.hito === 'string' ? hit.hito.trim() : '';
+    if (!nombre) {
+      throw new ApiError(`El hito ${i + 1} requiere un nombre`, 400);
+    }
+    hitos.push({ hito: nombre, completado: typeof hit.completado === 'boolean' ? hit.completado : false });
+  });
+  return hitos;
 }
 
 function validateRIF(value: unknown, campo: string): string {
@@ -174,6 +216,10 @@ export async function createConcesionario(input: CreateConcesionarioInput, token
       ? input.tipo_expansion
       : 'apertura';
   const metadatos = input.metadatos ?? {};
+  const tierInversion: TipoInversion | null =
+    input.tier_inversion && isTipoInversion(input.tier_inversion) ? input.tier_inversion : null;
+  const montoInversion = validateMontoInversion(input.monto_inversion);
+  const hitosApertura = validateHitosApertura(input.hitos_apertura) ?? [];
 
   const now = new Date().toISOString();
   const cliente = getSupabaseConToken(token);
@@ -196,6 +242,9 @@ export async function createConcesionario(input: CreateConcesionarioInput, token
       fecha_apertura_programada: fechaAperturaProgramada,
       tipo_expansion: tipoExpansion,
       metadatos,
+      tier_inversion: tierInversion,
+      monto_inversion: montoInversion,
+      hitos_apertura: hitosApertura,
       created_at: now,
       updated_at: now,
     })
@@ -279,6 +328,18 @@ export async function updateConcesionario(
   }
   if (input.metadatos !== undefined) {
     updates.metadatos = input.metadatos;
+  }
+  if (input.tier_inversion !== undefined) {
+    if (!isTipoInversion(input.tier_inversion)) {
+      throw new ApiError(`Nivel de inversión inválido. Valores válidos: ${TIPOS_INVERSION_VALIDOS.join(', ')}`, 400);
+    }
+    updates.tier_inversion = input.tier_inversion;
+  }
+  if (input.monto_inversion !== undefined) {
+    updates.monto_inversion = validateMontoInversion(input.monto_inversion);
+  }
+  if (input.hitos_apertura !== undefined) {
+    updates.hitos_apertura = validateHitosApertura(input.hitos_apertura);
   }
 
   const cliente = getSupabaseConToken(token);
