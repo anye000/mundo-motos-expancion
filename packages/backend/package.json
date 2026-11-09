@@ -17,6 +17,7 @@
     "seed": "tsx src/database/seeds/run.ts"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2",
     "@supabase/supabase-js": "^2.38.4",
     "axios": "^1.6.5",
     "bcryptjs": "^2.4.3",

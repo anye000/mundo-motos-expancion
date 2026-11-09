@@ -13,6 +13,7 @@ import reportesRouter from './modules/reportes/reporte.routes'
 import authRouter from './modules/auth/auth.routes'
 import adminRouter from './modules/auth/admin.routes'
 import analyticsRouter from './modules/analytics/analytics.routes'
+import { montarMcpsEnExpress } from './mcp/transport'
 
 // Cargar variables de entorno
 dotenv.config()
@@ -83,8 +84,21 @@ app.use(
 )
 
 // Middleware de compresión y logging
-app.use(compression())
+// El transporte MCP (/sse y /messages) va sin compresión: los eventos SSE
+// deben salir al vuelo y la compresión los buferaría bloqueando los mensajes.
+const filtroCompresion = (req: Request, res: Response): boolean => {
+  if (req.path === '/sse' || req.path === '/messages') return false
+  const tipo = res.getHeader('Content-Type')
+  return typeof tipo === 'string' && /text|json|javascript/.test(tipo)
+}
+app.use(compression({ filter: filtroCompresion }))
 app.use(pinoHttp())
+
+// Transporte MCP (HTTP/SSE): se monta ANTES de express.json porque el parser
+// del SDK MCP lee y parsea el cuerpo de /messages por sí mismo y necesita el
+// stream crudo. Sin apiLimiter: una conexión SSE long-lived + 1 POST por
+// tool call superaría fácilmente el límite de 100/15min.
+montarMcpsEnExpress(app)
 
 // Parseo de JSON y URL-encoded
 app.use(express.json({ limit: '10mb' }))

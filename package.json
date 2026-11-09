@@ -33,6 +33,7 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2",
     "dotenv": "^17.0.0",
     "express-rate-limit": "^8.6.2"
   },
