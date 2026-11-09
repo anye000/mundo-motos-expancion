@@ -2,14 +2,30 @@
 
 El backend expone un servidor **MCP (Model Context Protocol)** para que agentes
 de IA externos (harnesses de Digibee, asistentes cloud, clientes de escritorio)
-gestionen los concesionarios y consulten los reportes del plan 2026.
+consulten los concesionarios y los reportes del plan 2026.
 
-- **Transporte**: HTTP/SSE legacy del SDK oficial
-  (`@modelcontextprotocol/sdk`).
-- **URL pública (Render)**: `https://<tu-servicio>.onrender.com/sse`
+- **Transportes**:
+  - Streamable HTTP (moderno): `POST /mcp` (modo stateless, JSON directo).
+  - HTTP/SSE legacy del SDK (`@modelcontextprotocol/sdk`): `GET /sse` +
+    `POST /messages?sessionId=...`.
+- **URL pública (Render)**: `https://<tu-servicio>.onrender.com/mcp` o `/sse`
 - **Auth por petición**: header `Authorization: Bearer <MCP_AUTH_TOKEN>`.
 
-## ¿Cómo funciona el transporte?
+> **Solo lectura (decisión del propietario, 2026-11-09):** el MCP expone
+> únicamente herramientas de consulta. No existen `crear/editar/eliminar`
+> desde el MCP; las mutaciones se hacen por la API REST/consola con
+> credenciales humanas.
+
+## ¿Cómo funcionan los transportes?
+
+### Streamable HTTP (recomendado)
+
+| Ruta | Método | Descripción |
+|------|--------|-------------|
+| `/mcp` | POST | JSON-RPC directa: la respuesta llega en el mismo cuerpo (modo stateless; cada POST es una sesión efímera). |
+| `/mcp` | GET/DELETE | 405 (no se mantienen streams ni sesiones persistentes). |
+
+### Legacy HTTP+SSE
 
 | Ruta | Método | Canal | Descripción |
 |------|--------|-------|-------------|
@@ -40,14 +56,11 @@ En el dashboard de Render, esto se agrega en el servicio → *Environment*.
 base de datos (RLS no aplica), de modo que el agente no depende de un JWT de
 usuario que expiraría en ~1 hora.
 
-## Herramientas (tools)
+## Herramientas (tools) — solo lectura
 
 | Tool | Acción | Parámetros |
 |------|--------|------------|
 | `listar_concesionarios` | lectura | `estado`?, `ciudad`?, `departamento`?, `page`?, `limit`? (máx. 100) |
-| `crear_concesionario` | inserción | `nombre`, `razon_social`, `rif` (ej. J-12345678-9), `email`, `ciudad`, `departamento`, `direccion`, `latitud`, `longitud`; opcionales: `telefono`, `gerente_id`, `estado`, `fecha_apertura_programada` (YYYY-MM-DD), `tipo_expansion`, `metadatos` |
-| `editar_concesionario` | actualización | `id` (UUID) + cualquiera de los campos de creación (`rif` no editable); los cambios de estado quedan en `historial_estados` |
-| `eliminar_concesionario` | borrado físico | `id` (UUID). ⚠️ Elimina en cascada las interacciones CRM y expansiones vinculadas |
 | `obtener_reportes_2026` | lectura | opcionales: `concesionario_id`, `estado`, `ciudad`, `fecha_desde`, `fecha_hasta` (YYYY-MM-DD). Por defecto cubre **del 2026-01-01 al 2026-12-31** y devuelve aperturas, interacciones CRM y rendimiento por concesionario |
 
 Todas validan con zod en runtime y delegan en los servicios del backend, que
@@ -56,6 +69,24 @@ devuelven los mensajes de error de negocio en español.
 ## Configuración `mcpServers` para agentes
 
 ### Cliente con soporte de remote MCP (Claude Desktop / Cursor / genéricos)
+
+Transporte moderno (`POST /mcp`, streamable-http):
+
+```json
+{
+  "mcpServers": {
+    "mundo-motos-crm": {
+      "type": "http",
+      "url": "https://tu-servicio.onrender.com/mcp",
+      "headers": {
+        "Authorization": "Bearer TU_MCP_AUTH_TOKEN"
+      }
+    }
+  }
+}
+```
+
+Transporte legacy (HTTP+SSE), si el cliente no soporta streamable-http:
 
 ```json
 {
@@ -71,10 +102,13 @@ devuelven los mensajes de error de negocio en español.
 }
 ```
 
-### Harness sin soporte de headers (puente universal `mcp-remote`)
+### Cliente que solo habla `stdio` / `streamable-http` (ej. DSH)
 
-`mcp-remote` levanta un stdio local del lado del agente y apea al transporte
-SSE remoto, inyectando el header:
+Un cliente con `streamable-http` se conecta **directamente** a `POST /mcp`
+(sin puente). Solo si el cliente no soporta headers ni streamable-http:
+
+`mcp-remote` levanta un stdio local del lado del agente y aterriza al
+transporte remoto, inyectando el header:
 
 ```json
 {
@@ -144,19 +178,20 @@ curl -X POST "$BASE/messages?sessionId=<ID>" \
 - **service_role**: las herramientas bypasean RLS; el token debe tratarse como
   una credencial crítica. Rotala (`MCP_AUTH_TOKEN`) si se filtra: los agentes
   se reconfiguran con el nuevo valor.
-- **Borrados**: `eliminar_concesionario` es destructivo y cascada; es
-  razonable deshabilitarla por ambiente si el agente no debe borrar.
+- **Solo lectura**: el MCP no ofrece herramientas de mutación (decisión del
+  propietario). Los borrados/ediciones se hacen por REST/consola con
+  credenciales humanas y quedan trazables.
 - HTTPS únicamente (Render lo entrega de serie); sin rate-limit específico
-  para MCP (conexiones long-lived), protege el secreto y monitorea los logs.
+  para MCP (conexiones long-lived en SSE), protege el secreto y monitorea logs.
 
 ## Solución de problemas
 
 | Síntoma | Causa probable | Solución |
 |---------|----------------|----------|
-| `401 No autorizado` en `/sse` | Falta header o secreto incorrecto | Verifica `Authorization: Bearer <MCP_AUTH_TOKEN>` y que la variable coincida en el servidor |
+| `401 No autorizado` en `/sse` o `/mcp` | Falta header o secreto incorrecto | Verifica `Authorization: Bearer <MCP_AUTH_TOKEN>` y que la variable coincida en el servidor |
 | `404 Sesión MCP no encontrada` en `POST /messages` | Sesión cerrada o id erróneo | Reabre `GET /sse`, usa el `sessionId` del último evento `endpoint` |
-| La conexión se cierra tras ~1-2 min | Proxy con timeout idle | El backend envía comentarios SSE cada 15 s (`: ping`); asegúrate de que no haya un balanceador propio en camino |
-| `initialize` OK pero sin respuesta | Respuestas por SSE | Los resultados JSON-RPC llegan por el stream `GET /sse`, no en el cuerpo del POST |
+| La conexión se cierra tras ~1-2 min (legacy SSE) | Proxy con timeout idle | El backend envía comentarios SSE cada 15 s (`: ping`); en ese caso usa `POST /mcp` (sin conexión persistente) |
+| `initialize` OK pero sin respuesta (legacy SSE) | Respuestas por SSE | Los resultados JSON-RPC llegan por el stream `GET /sse`, no en el cuerpo del POST |
 | Tool responde `isError` con mensaje SQL | RIF duplicado, FK inválida, etc. | Edita el argumento según el mensaje devuelto (viene en español) |
 
 ## Desarrollo local

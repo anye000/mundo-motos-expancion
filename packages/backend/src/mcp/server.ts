@@ -1,22 +1,23 @@
 /**
  * Servidor MCP (Model Context Protocol) de Mundo Motos CRM.
  *
- * Declara las herramientas que exponen la gestión de concesionarios y los
- * reportes del CRM a agentes de IA externos (harnesses de Digibee, asistentes
- * cloud, etc.). Las herramientas reutilizan los servicios existentes del
- * backend; el acceso a Supabase se hace con SUPABASE_SERVICE_ROLE_KEY, de
- * modo que RLS no aplica y las operaciones remotas no dependen de un JWT de
- * usuario (los JWT de Supabase expiran en ~1 hora, inviables para agentes).
+ * Declara las herramientas de CONSULTA (solo lectura) que exponen la gestión
+ * de concesionarios y los reportes del CRM a agentes de IA externos
+ * (harnesses de Digibee, asistentes cloud, etc.). Las herramientas
+ * reutilizan los servicios existentes del backend; el acceso a Supabase se
+ * hace con SUPABASE_SERVICE_ROLE_KEY, de modo que RLS no aplica y las
+ * operaciones remotas no dependen de un JWT de usuario (los JWT de Supabase
+ * expiran en ~1 hora, inviables para agentes).
+ *
+ * Decisión del propietario (2026-11-09): el MCP es de SOLO LECTURA. No
+ * expone crear/editar/eliminar concesionarios; las mutaciones siguen
+ * haciéndose por la API REST/consola con credenciales humanas.
  */
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import * as concesionarioService from '@modules/concesionarios/concesionario.service';
-import {
-  ConcesionarioFilters,
-  CreateConcesionarioInput,
-  UpdateConcesionarioInput,
-} from '@modules/concesionarios/concesionario.model';
+import { ConcesionarioFilters } from '@modules/concesionarios/concesionario.model';
 import * as reporteService from '@modules/reportes/reporte.service';
 import { ReporteFilters } from '@modules/reportes/reporte.model';
 import { ApiError } from '@utils/helpers';
@@ -31,9 +32,6 @@ const ESTADOS = [
   'rechazado',
   'completado',
 ] as const;
-
-/** Tipos de expansión válidos para un concesionario. */
-const TIPOS_EXPANSION = ['apertura', 'ampliacion', 'relocalizacion', 'otro'] as const;
 
 /** Formato de fecha exigido por las herramientas (YYYY-MM-DD). */
 const FECHA_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -81,9 +79,9 @@ function contenidoJson(valor: unknown): { content: Array<{ type: 'text'; text: s
 }
 
 /**
- * Crea una instancia de McpServer con las 5 herramientas registradas.
+ * Crea una instancia de McpServer con las herramientas de consulta.
  *
- * Se crea una instancia por sesión SSE (cada conexión obtiene su propio
+ * Se crea una instancia por sesión (cada conexión obtiene su propio
  * servidor) porque el SDK mantiene una única conexión activa por McpServer;
  * el registro de herramientas por zod es barato y evita rutas de respuesta
  * cruzadas entre sesiones concurrentes.
@@ -128,141 +126,6 @@ export function crearServidorMcp(): McpServer {
           tokenServicio()
         );
         return contenidoJson(resultado);
-      } catch (error) {
-        return respuestaError(error);
-      }
-    }
-  );
-
-  // ------------------------------------------------------------------
-  // crear_concesionario
-  // ------------------------------------------------------------------
-  const ESQUEMA_CREAR = {
-    nombre: z.string().min(1).describe('Nombre comercial del punto de venta'),
-    razon_social: z.string().min(1).describe('Razón social legal'),
-    rif: z
-      .string()
-      .regex(/^[JVG]-?\d{8}-?\d$/, 'Formato RIF inválido (ej. J-12345678-9)')
-      .describe('RIF venezolano (ej. J-12345678-9)'),
-    email: z.string().email().describe('Email de contacto'),
-    telefono: z.string().optional().describe('Teléfono de contacto (opcional)'),
-    ciudad: z.string().min(1).describe('Ciudad'),
-    departamento: z.string().min(1).describe('Departamento o estado'),
-    direccion: z.string().min(1).describe('Dirección física'),
-    latitud: z.number().min(-90).max(90).describe('Latitud geográfica'),
-    longitud: z.number().min(-180).max(180).describe('Longitud geográfica'),
-    gerente_id: z.string().uuid().optional().describe('UUID del gerente asignado (opcional)'),
-    estado: z
-      .enum(ESTADOS)
-      .optional()
-      .describe('Estado operativo inicial (por defecto: activo)'),
-    fecha_apertura_programada: z
-      .string()
-      .regex(FECHA_PATTERN, 'Debe ser una fecha YYYY-MM-DD')
-      .optional()
-      .describe('Fecha de apertura programada (YYYY-MM-DD, opcional)'),
-    tipo_expansion: z
-      .enum(TIPOS_EXPANSION)
-      .optional()
-      .describe('Tipo de expansión (por defecto: apertura)'),
-    metadatos: z.record(z.unknown()).optional().describe('Metadatos libres (JSON, opcional)'),
-  };
-
-  servidor.registerTool(
-    'crear_concesionario',
-    {
-      title: 'Crear concesionario',
-      description:
-        'Inserta un nuevo punto de venta (concesionario) en la base de datos. Requiere un ' +
-        'RIF venezolano con formato J/V/G-12345678-9 (ej. J-12345678-9), email válido y ' +
-        'coordenadas geográficas. El estado por defecto es "activo" y el tipo de expansión ' +
-        '"apertura". El RIF debe ser único.',
-      inputSchema: ESQUEMA_CREAR as unknown as ShapeRuntime,
-    },
-    async (entrada: unknown) => {
-      try {
-        const creado = await concesionarioService.createConcesionario(
-          entrada as CreateConcesionarioInput,
-          tokenServicio()
-        );
-        return contenidoJson(creado);
-      } catch (error) {
-        return respuestaError(error);
-      }
-    }
-  );
-
-  // ------------------------------------------------------------------
-  // editar_concesionario
-  // ------------------------------------------------------------------
-  const ESQUEMA_EDITAR = {
-    id: z.string().uuid().describe('UUID del concesionario a editar'),
-    nombre: z.string().min(1).optional(),
-    razon_social: z.string().min(1).optional(),
-    email: z.string().email().optional(),
-    telefono: z.string().optional(),
-    ciudad: z.string().min(1).optional(),
-    departamento: z.string().min(1).optional(),
-    direccion: z.string().min(1).optional(),
-    latitud: z.number().min(-90).max(90).optional(),
-    longitud: z.number().min(-180).max(180).optional(),
-    gerente_id: z.string().uuid().optional(),
-    estado: z.enum(ESTADOS).optional().describe('Nuevo estado operativo'),
-    fecha_apertura_programada: z
-      .string()
-      .regex(FECHA_PATTERN, 'Debe ser una fecha YYYY-MM-DD')
-      .optional(),
-    tipo_expansion: z.enum(TIPOS_EXPANSION).optional(),
-    metadatos: z.record(z.unknown()).optional(),
-  };
-
-  servidor.registerTool(
-    'editar_concesionario',
-    {
-      title: 'Editar concesionario',
-      description:
-        'Actualiza los datos de un concesionario existente por id (UUID). Solo se modifican ' +
-        'los campos enviados. El RIF no es editable. Los cambios de estado quedan ' +
-        'registrados en el historial de estados. Envía al menos un campo además del id.',
-      inputSchema: ESQUEMA_EDITAR as unknown as ShapeRuntime,
-    },
-    async (entrada: unknown) => {
-      try {
-        const { id, ...updates } = entrada as UpdateConcesionarioInput & { id: string };
-        const actualizado = await concesionarioService.updateConcesionario(
-          id,
-          updates,
-          tokenServicio()
-        );
-        return contenidoJson(actualizado);
-      } catch (error) {
-        return respuestaError(error);
-      }
-    }
-  );
-
-  // ------------------------------------------------------------------
-  // eliminar_concesionario
-  // ------------------------------------------------------------------
-  const ESQUEMA_ELIMINAR = {
-    id: z.string().uuid().describe('UUID del concesionario a eliminar'),
-  };
-
-  servidor.registerTool(
-    'eliminar_concesionario',
-    {
-      title: 'Eliminar concesionario',
-      description:
-        'Elimina físicamente un concesionario por id (UUID). ¡Operación destructiva! Las ' +
-        'interacciones CRM y las expansiones vinculadas (cronograma/calendario) se ' +
-        'eliminan en cascada. No hay papelera de reciclaje.',
-      inputSchema: ESQUEMA_ELIMINAR as unknown as ShapeRuntime,
-    },
-    async (entrada: unknown) => {
-      try {
-        const { id } = entrada as { id: string };
-        await concesionarioService.deleteConcesionario(id, tokenServicio());
-        return contenidoJson({ eliminado: true, id });
       } catch (error) {
         return respuestaError(error);
       }

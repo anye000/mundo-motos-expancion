@@ -1,32 +1,45 @@
 /**
- * Montaje del transporte HTTP/SSE del servidor MCP sobre Express.
+ * Montaje de los transportes MCP del servidor sobre Express.
  *
- * Usa el transporte legacy HTTP+SSE del SDK, el estándar de facto para
- * harnesses remotos (Digibee, plataformas cloud):
+ * Se exponen DOS transportes con la misma autenticación:
  *
- *   - GET  /sse                       → abre el canal servidor→agente (SSE) y
- *                                       devuelve un evento `endpoint` con la
- *                                       URL /messages?sessionId=<id>.
- *   - POST /messages?sessionId=<id>   → canal agente→servidor (JSON-RPC).
+ * 1) Legacy HTTP+SSE del SDK (estándar de facto para harnesses remotos):
  *
- * Debe montarse ANTES de express.json en index.ts: el SDK parsea el cuerpo
- * de /messages por sí mismo y un parser previo consumiría el stream. La
- * compresión también excluye estas rutas (ver filtroCompresion en index.ts)
- * para no buferar los mensajes SSE.
+ *     - GET  /sse                       → abre el canal servidor→agente (SSE) y
+ *                                         devuelve un evento `endpoint` con la
+ *                                         URL /messages?sessionId=<id>.
+ *     - POST /messages?sessionId=<id>   → canal agente→servidor (JSON-RPC).
  *
- * Cada sesión SSE obtiene su propia McpServer instance (el registro de
+ * 2) Streamable HTTP (transporte moderno del protocolo), pensado para
+ *    clientes tipo DSH que solo hablan stdio / streamable-http y conectan
+ *    sin necesitad de puentes locales:
+ *
+ *     - POST /mcp      → JSON-RPC de ida y vuelta en JSON directo (modo
+ *                        stateless: cada POST es una sesión efímera).
+ *     - GET  /mcp      → 405 (no mantenemos streams servidor→agente).
+ *     - DELETE /mcp    → 405 (no hay sesiones persistentes que cerrar).
+ *
+ * Las rutas SSE (/sse y /messages) se montan ANTES de express.json: el SDK
+ * parsea el cuerpo por sí mismo y un parser previo consumiría el stream. La
+ * compresión también excluye estas rutas y /mcp (ver filtroCompresion en
+ * index.ts) para no buferar streamings. /mcp usa un parser inline exclusivo
+ * de su endpoint y pasa el cuerpo ya parseado al SDK (req.body → parsedBody).
+ *
+ * Cada sesión configura su propia McpServer instance (el registro de
  * herramientas por zod es barato), porque el SDK mantiene una única conexión
  * activa por McpServer y sharing de la instancia dejaría respuestas de una
  * sesión viajando por el stream de otra.
  */
 
-import { Express, Request, Response, NextFunction } from 'express';
+import express, { Express, Request, Response, NextFunction } from 'express';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { requerirAuthMcp } from './auth';
 import { crearServidorMcp } from './server';
 
 const RUTA_EVENTOS = '/sse';
 const RUTA_MENSAJES = '/messages';
+const RUTA_MCP = '/mcp';
 
 /** Sesiones SSE activas por id de sesión. */
 const transportesPorSesion = new Map<string, SSEServerTransport>();
@@ -66,7 +79,7 @@ function abrirCanalSse(_req: Request, res: Response): void {
   });
 }
 
-/** POST /messages - canal JSON-RPC del agente hacia el servidor. */
+/** POST /messages - canal JSON-RPC del transporte legacy SSE. */
 function recibirMensajes(req: Request, res: Response, next: NextFunction): void {
   const sessionId = typeof req.query.sessionId === 'string' ? req.query.sessionId : null;
 
@@ -83,9 +96,35 @@ function recibirMensajes(req: Request, res: Response, next: NextFunction): void 
   transporte.handlePostMessage(req, res).catch(next);
 }
 
+/** POST /mcp - transporte Streamable HTTP en modo stateless. */
+async function atenderMcpStreamable(req: Request, res: Response): Promise<void> {
+  // Sesión efímera por petición: servidor + transporte desechables, respuesta
+  // JSON directa (enableJsonResponse). El cuerpo de la petición ya lo parseó
+  // el parser inline del endpoint, así se lo pasamos ya consumido al SDK.
+  const transporte = new StreamableHTTPServerTransport({
+    sessionIdGenerator: undefined,
+    enableJsonResponse: true,
+  });
+  const servidor = crearServidorMcp();
+  res.on('close', () => {
+    void transporte.close();
+    void servidor.close();
+  });
+  await servidor.connect(transporte);
+  await transporte.handleRequest(req, res, req.body as unknown);
+}
+
+/** HEAD-compatibles: 405 para métodos que el modo stateless no ofrece. */
+function metodoNoPermitido(_req: Request, res: Response): void {
+  res
+    .status(405)
+    .set('Allow', 'POST')
+    .json({ success: false, error: 'Método no permitido en /mcp (solo POST)' });
+}
+
 /**
- * Monta el transporte MCP en la app Express. Se invoca desde index.ts antes
- * de los parsers de cuerpo de express.
+ * Monta los transportes MCP en la app Express. Las rutas SSE se invocan desde
+ * index.ts antes de los parsers de cuerpo de express; /mcp decide su parser.
  */
 export function montarMcpsEnExpress(app: Express): void {
   if (!process.env.MCP_AUTH_TOKEN) {
@@ -94,8 +133,18 @@ export function montarMcpsEnExpress(app: Express): void {
     );
   }
 
+  // Transporte legacy HTTP+SSE (prioriza: compatible con todo harness).
   app.get(RUTA_EVENTOS, requerirAuthMcp, abrirCanalSse);
   app.post(RUTA_MENSAJES, requerirAuthMcp, recibirMensajes);
 
-  console.log(`[MCP] Transporte MCP montado en GET ${RUTA_EVENTOS} y POST ${RUTA_MENSAJES}`);
+  // Transporte moderno Streamable HTTP (stateless, JSON directo).
+  app.post(RUTA_MCP, requerirAuthMcp, express.json({ limit: '1mb' }), (req, res, next) => {
+    atenderMcpStreamable(req, res).catch(next);
+  });
+  app.get(RUTA_MCP, requerirAuthMcp, metodoNoPermitido);
+  app.delete(RUTA_MCP, requerirAuthMcp, metodoNoPermitido);
+
+  console.log(
+    `[MCP] Transportes MCP montados en GET ${RUTA_EVENTOS} + POST ${RUTA_MENSAJES} (legacy) y POST ${RUTA_MCP} (streamable)`
+  );
 }

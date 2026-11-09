@@ -84,10 +84,10 @@ app.use(
 )
 
 // Middleware de compresión y logging
-// El transporte MCP (/sse y /messages) va sin compresión: los eventos SSE
-// deben salir al vuelo y la compresión los buferaría bloqueando los mensajes.
+// El transporte MCP (/sse, /messages y /mcp) va sin compresión: los eventos
+// SSE deben salir al vuelo y la compresión los buferaría bloqueando mensajes.
 const filtroCompresion = (req: Request, res: Response): boolean => {
-  if (req.path === '/sse' || req.path === '/messages') return false
+  if (req.path === '/sse' || req.path === '/messages' || req.path === '/mcp') return false
   const tipo = res.getHeader('Content-Type')
   return typeof tipo === 'string' && /text|json|javascript/.test(tipo)
 }
