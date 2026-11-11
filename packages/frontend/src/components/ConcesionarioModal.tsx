@@ -47,6 +47,21 @@ interface FormConcesionario {
   tier_inversion: TipoInversion | ''
   monto_inversion: string
   hitos_apertura: { hito: string; completado: boolean }[]
+  /** Ficha de control de franquicias y aliados (Excel 2026). */
+  persona_contacto: string
+  contrato_firmado: '' | 'si' | 'no'
+  monto_franquicia_usd: string
+  forma_pago: string
+  fecha_apertura: string
+  dias_credito: string
+  vencimiento_credito: string
+  monto_pagado_usd: string
+  saldo_pendiente_usd: string
+  estatus_pago: string
+  num_motos_inicial: string
+  fecha_renovacion_contrato: string
+  observaciones: string
+  fuente: string
 }
 
 const FORM_INICIAL: FormConcesionario = {
@@ -66,6 +81,20 @@ const FORM_INICIAL: FormConcesionario = {
   tier_inversion: '',
   monto_inversion: '',
   hitos_apertura: [],
+  persona_contacto: '',
+  contrato_firmado: '',
+  monto_franquicia_usd: '',
+  forma_pago: '',
+  fecha_apertura: '',
+  dias_credito: '',
+  vencimiento_credito: '',
+  monto_pagado_usd: '',
+  saldo_pendiente_usd: '',
+  estatus_pago: '',
+  num_motos_inicial: '',
+  fecha_renovacion_contrato: '',
+  observaciones: '',
+  fuente: '',
 }
 
 /** Captura clics en el mini-mapa para fijar las coordenadas. */
@@ -140,6 +169,25 @@ function aFormulario(concesionario: Concesionario): FormConcesionario {
     tier_inversion: concesionario.tier_inversion ?? '',
     monto_inversion: concesionario.monto_inversion != null ? String(concesionario.monto_inversion) : '',
     hitos_apertura: concesionario.hitos_apertura ?? [],
+    persona_contacto: concesionario.persona_contacto ?? '',
+    contrato_firmado:
+      concesionario.contrato_firmado === true ? 'si' : concesionario.contrato_firmado === false ? 'no' : '',
+    monto_franquicia_usd:
+      concesionario.monto_franquicia_usd != null ? String(concesionario.monto_franquicia_usd) : '',
+    forma_pago: concesionario.forma_pago ?? '',
+    fecha_apertura: concesionario.fecha_apertura ?? '',
+    dias_credito: concesionario.dias_credito != null ? String(concesionario.dias_credito) : '',
+    vencimiento_credito: concesionario.vencimiento_credito ?? '',
+    monto_pagado_usd:
+      concesionario.monto_pagado_usd != null ? String(concesionario.monto_pagado_usd) : '',
+    saldo_pendiente_usd:
+      concesionario.saldo_pendiente_usd != null ? String(concesionario.saldo_pendiente_usd) : '',
+    estatus_pago: concesionario.estatus_pago ?? '',
+    num_motos_inicial:
+      concesionario.num_motos_inicial != null ? String(concesionario.num_motos_inicial) : '',
+    fecha_renovacion_contrato: concesionario.fecha_renovacion_contrato ?? '',
+    observaciones: concesionario.observaciones ?? '',
+    fuente: concesionario.fuente ?? '',
   }
 }
 
@@ -343,6 +391,36 @@ export function ConcesionarioModal({
         return
       }
     }
+    // Validación de la ficha de control 2026 (montos US$ y enteros)
+    const montosUsd: [string, string][] = [
+      ['monto_franquicia_usd', 'Monto franquicia (US$)'],
+      ['monto_pagado_usd', 'Monto pagado (US$)'],
+      ['saldo_pendiente_usd', 'Saldo pendiente (US$)'],
+    ]
+    for (const [campo, etiqueta] of montosUsd) {
+      const valor = form[campo as 'monto_franquicia_usd'].trim()
+      if (valor !== '') {
+        const numero = Number(valor)
+        if (Number.isNaN(numero) || numero < 0) {
+          setError(`El campo "${etiqueta}" debe ser un número válido mayor o igual a 0`)
+          return
+        }
+      }
+    }
+    const enteros: [string, string][] = [
+      ['dias_credito', 'Días de crédito'],
+      ['num_motos_inicial', 'Nº motos inicial'],
+    ]
+    for (const [campo, etiqueta] of enteros) {
+      const valor = form[campo as 'dias_credito'].trim()
+      if (valor !== '') {
+        const numero = Number(valor)
+        if (!Number.isInteger(numero) || numero < 0) {
+          setError(`El campo "${etiqueta}" debe ser un número entero mayor o igual a 0`)
+          return
+        }
+      }
+    }
     const esEstadoExpansion = ['proximo', 'en_ejecucion', 'completado'].includes(form.estado)
     if (esEstadoExpansion && !form.fecha_apertura_programada) {
       setError('La fecha de apertura programada es obligatoria para estados de expansión')
@@ -369,6 +447,24 @@ export function ConcesionarioModal({
         tier_inversion: form.tier_inversion || null,
         monto_inversion: form.monto_inversion ? Number(form.monto_inversion) : null,
         hitos_apertura: form.hitos_apertura,
+        persona_contacto: form.persona_contacto.trim() || null,
+        contrato_firmado: form.contrato_firmado === '' ? null : form.contrato_firmado === 'si',
+        monto_franquicia_usd:
+          form.monto_franquicia_usd.trim() !== '' ? Number(form.monto_franquicia_usd) : null,
+        forma_pago: form.forma_pago || null,
+        fecha_apertura: form.fecha_apertura || null,
+        dias_credito: form.dias_credito.trim() !== '' ? Number(form.dias_credito) : null,
+        vencimiento_credito: form.vencimiento_credito || null,
+        monto_pagado_usd:
+          form.monto_pagado_usd.trim() !== '' ? Number(form.monto_pagado_usd) : null,
+        saldo_pendiente_usd:
+          form.saldo_pendiente_usd.trim() !== '' ? Number(form.saldo_pendiente_usd) : null,
+        estatus_pago: form.estatus_pago || null,
+        num_motos_inicial:
+          form.num_motos_inicial.trim() !== '' ? Number(form.num_motos_inicial) : null,
+        fecha_renovacion_contrato: form.fecha_renovacion_contrato || null,
+        observaciones: form.observaciones.trim() || null,
+        fuente: form.fuente || null,
       }
       const guardado = concesionario
         ? await apiService.updateConcesionario(concesionario.id, payload)
@@ -650,6 +746,198 @@ export function ConcesionarioModal({
                 placeholder="Av. Francisco de Miranda, Chacao"
               />
             </label>
+          </div>
+
+          {/* Ficha de control de franquicias y aliados (consolidado Excel 2026) */}
+          <div className="rounded-lg border border-mm-gray-700 p-4">
+            <span className="mb-3 block text-sm font-semibold text-mm-yellow">
+              Ficha de control de franquicia (Excel 2026)
+            </span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <label className="block">
+                <span className="mb-1 block text-sm font-medium text-mm-gray-300">
+                  Persona de contacto
+                </span>
+                <input
+                  className="input-dark"
+                  value={form.persona_contacto}
+                  onChange={(e) => actualizar('persona_contacto', e.target.value)}
+                  placeholder="Nombre y apellido"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-sm font-medium text-mm-gray-300">
+                  Contrato firmado
+                </span>
+                <select
+                  className="input-dark"
+                  value={form.contrato_firmado}
+                  onChange={(e) => actualizar('contrato_firmado', e.target.value)}
+                >
+                  <option value="">Sin dato</option>
+                  <option value="si">Sí</option>
+                  <option value="no">No</option>
+                </select>
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-sm font-medium text-mm-gray-300">
+                  Monto franquicia (US$)
+                </span>
+                <input
+                  type="number"
+                  min="0"
+                  step="1000"
+                  className="input-dark"
+                  value={form.monto_franquicia_usd}
+                  onChange={(e) => actualizar('monto_franquicia_usd', e.target.value)}
+                  placeholder="25000"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-sm font-medium text-mm-gray-300">Forma de pago</span>
+                <select
+                  className="input-dark"
+                  value={form.forma_pago}
+                  onChange={(e) => actualizar('forma_pago', e.target.value)}
+                >
+                  <option value="">Sin dato</option>
+                  <option value="Contado">Contado</option>
+                  <option value="Crédito">Crédito</option>
+                  <option value="Mixto">Mixto</option>
+                  <option value="Otro">Otro</option>
+                </select>
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-sm font-medium text-mm-gray-300">
+                  Fecha de apertura
+                </span>
+                <input
+                  type="date"
+                  className="input-dark"
+                  value={form.fecha_apertura}
+                  onChange={(e) => actualizar('fecha_apertura', e.target.value)}
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-sm font-medium text-mm-gray-300">
+                  Días de crédito
+                </span>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  className="input-dark"
+                  value={form.dias_credito}
+                  onChange={(e) => actualizar('dias_credito', e.target.value)}
+                  placeholder="60"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-sm font-medium text-mm-gray-300">
+                  Vencimiento de crédito
+                </span>
+                <input
+                  type="date"
+                  className="input-dark"
+                  value={form.vencimiento_credito}
+                  onChange={(e) => actualizar('vencimiento_credito', e.target.value)}
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-sm font-medium text-mm-gray-300">
+                  Monto pagado (US$)
+                </span>
+                <input
+                  type="number"
+                  min="0"
+                  step="1000"
+                  className="input-dark"
+                  value={form.monto_pagado_usd}
+                  onChange={(e) => actualizar('monto_pagado_usd', e.target.value)}
+                  placeholder="15000"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-sm font-medium text-mm-gray-300">
+                  Saldo pendiente (US$)
+                </span>
+                <input
+                  type="number"
+                  min="0"
+                  step="1000"
+                  className="input-dark"
+                  value={form.saldo_pendiente_usd}
+                  onChange={(e) => actualizar('saldo_pendiente_usd', e.target.value)}
+                  placeholder="10000"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-sm font-medium text-mm-gray-300">
+                  Estatus de pago
+                </span>
+                <select
+                  className="input-dark"
+                  value={form.estatus_pago}
+                  onChange={(e) => actualizar('estatus_pago', e.target.value)}
+                >
+                  <option value="">Sin dato</option>
+                  <option value="Cancelado">Cancelado</option>
+                  <option value="Al día">Al día</option>
+                  <option value="Pendiente">Pendiente</option>
+                  <option value="Otro">Otro</option>
+                </select>
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-sm font-medium text-mm-gray-300">
+                  Nº motos inicial
+                </span>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  className="input-dark"
+                  value={form.num_motos_inicial}
+                  onChange={(e) => actualizar('num_motos_inicial', e.target.value)}
+                  placeholder="30"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-sm font-medium text-mm-gray-300">
+                  Renovación de contrato
+                </span>
+                <input
+                  type="date"
+                  className="input-dark"
+                  value={form.fecha_renovacion_contrato}
+                  onChange={(e) => actualizar('fecha_renovacion_contrato', e.target.value)}
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-sm font-medium text-mm-gray-300">Fuente</span>
+                <select
+                  className="input-dark"
+                  value={form.fuente}
+                  onChange={(e) => actualizar('fuente', e.target.value)}
+                >
+                  <option value="">Sin dato</option>
+                  <option value="Control + Reporte">Control + Reporte</option>
+                  <option value="Solo Reporte">Solo Reporte</option>
+                  <option value="Solo Control">Solo Control</option>
+                  <option value="Otro">Otro</option>
+                </select>
+              </label>
+              <label className="block sm:col-span-2">
+                <span className="mb-1 block text-sm font-medium text-mm-gray-300">
+                  Observaciones
+                </span>
+                <textarea
+                  className="input-dark min-h-[70px] w-full resize-y"
+                  value={form.observaciones}
+                  onChange={(e) => actualizar('observaciones', e.target.value)}
+                  placeholder="Notas de la ficha de control"
+                />
+              </label>
+            </div>
           </div>
 
           <div>

@@ -11,6 +11,22 @@ export interface DetalleConcesionarioModalProps {
   onCerrar: () => void
 }
 
+/** Campo opcional de la ficha de control: se oculta cuando no hay valor. */
+function CampoFicha({ etiqueta, valor }: { etiqueta: string; valor: string | null }) {
+  if (!valor) return null
+  return (
+    <div>
+      <p className="text-xs font-medium text-mm-gray-400">{etiqueta}</p>
+      <p className="mt-1 text-sm text-mm-gray-200">{valor}</p>
+    </div>
+  )
+}
+
+function formatoUsd(valor: number | null): string | null {
+  if (valor == null) return null
+  return `$${valor.toLocaleString('en-US')}`
+}
+
 type Pestana = 'informacion' | 'interacciones' | 'historial'
 
 const PESTANAS: { id: Pestana; label: string; icono: typeof History }[] = [
@@ -170,6 +186,64 @@ export function DetalleConcesionarioModal({
                   </p>
                 </div>
               )}
+              </div>
+
+              <div className="rounded-lg border border-mm-gray-700 bg-mm-gray-900/50 p-4">
+                <p className="mb-3 text-sm font-semibold text-mm-yellow">
+                  Ficha de control de franquicia (Excel 2026)
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <CampoFicha etiqueta="Persona de contacto" valor={concesionario.persona_contacto} />
+                  <CampoFicha
+                    etiqueta="Contrato firmado"
+                    valor={
+                      concesionario.contrato_firmado === true
+                        ? 'Sí'
+                        : concesionario.contrato_firmado === false
+                          ? 'No'
+                          : null
+                    }
+                  />
+                  <CampoFicha
+                    etiqueta="Monto franquicia (US$)"
+                    valor={formatoUsd(concesionario.monto_franquicia_usd)}
+                  />
+                  <CampoFicha etiqueta="Forma de pago" valor={concesionario.forma_pago} />
+                  <CampoFicha etiqueta="Fecha de apertura" valor={concesionario.fecha_apertura} />
+                  <CampoFicha
+                    etiqueta="Días de crédito"
+                    valor={concesionario.dias_credito != null ? String(concesionario.dias_credito) : null}
+                  />
+                  <CampoFicha
+                    etiqueta="Vencimiento de crédito"
+                    valor={concesionario.vencimiento_credito}
+                  />
+                  <CampoFicha
+                    etiqueta="Monto pagado (US$)"
+                    valor={formatoUsd(concesionario.monto_pagado_usd)}
+                  />
+                  <CampoFicha
+                    etiqueta="Saldo pendiente (US$)"
+                    valor={formatoUsd(concesionario.saldo_pendiente_usd)}
+                  />
+                  <CampoFicha etiqueta="Estatus de pago" valor={concesionario.estatus_pago} />
+                  <CampoFicha
+                    etiqueta="Nº motos inicial"
+                    valor={
+                      concesionario.num_motos_inicial != null
+                        ? String(concesionario.num_motos_inicial)
+                        : null
+                    }
+                  />
+                  <CampoFicha
+                    etiqueta="Renovación de contrato"
+                    valor={concesionario.fecha_renovacion_contrato}
+                  />
+                  <CampoFicha etiqueta="Fuente" valor={concesionario.fuente} />
+                  <div className="sm:col-span-2">
+                    <CampoFicha etiqueta="Observaciones" valor={concesionario.observaciones} />
+                  </div>
+                </div>
               </div>
             </>
           )}

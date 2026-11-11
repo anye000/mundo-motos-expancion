@@ -87,6 +87,94 @@ function validateHitosApertura(value: unknown): HitoApertura[] | null {
   return hitos;
 }
 
+/** Cadena opcional: recorta y convierte vacío en null. */
+function validateOpcionalString(value: unknown, campo: string): string | null {
+  if (value === undefined || value === null) {
+    return null;
+  }
+  if (typeof value !== 'string') {
+    throw new ApiError(`El campo "${campo}" debe ser texto`, 400);
+  }
+  const texto = value.trim();
+  return texto === '' ? null : texto;
+}
+
+/** Booleano opcional (true/false/null). */
+function validateOpcionalBoolean(value: unknown, campo: string): boolean | null {
+  if (value === undefined || value === null || value === '') {
+    return null;
+  }
+  if (typeof value !== 'boolean') {
+    throw new ApiError(`El campo "${campo}" debe ser verdadero o falso`, 400);
+  }
+  return value;
+}
+
+/** Número opcional >= 0 (para montos). */
+function validateOpcionalNumber(value: unknown, campo: string): number | null {
+  if (value === undefined || value === null || value === '') {
+    return null;
+  }
+  const numero = Number(value);
+  if (Number.isNaN(numero) || numero < 0) {
+    throw new ApiError(`El campo "${campo}" debe ser un número mayor o igual a 0`, 400);
+  }
+  return numero;
+}
+
+/** Entero opcional >= 0 (para días de crédito y motos iniciales). */
+function validateOpcionalEntero(value: unknown, campo: string): number | null {
+  if (value === undefined || value === null || value === '') {
+    return null;
+  }
+  const numero = Number(value);
+  if (!Number.isInteger(numero) || numero < 0) {
+    throw new ApiError(`El campo "${campo}" debe ser un número entero mayor o igual a 0`, 400);
+  }
+  return numero;
+}
+
+/**
+ * Agrupa la validación de los campos de la ficha de control 2026
+ * (consolidado Excel "Control de Franquicias y Aliados").
+ */
+function validarFichaControl(input: {
+  persona_contacto?: unknown;
+  contrato_firmado?: unknown;
+  monto_franquicia_usd?: unknown;
+  forma_pago?: unknown;
+  fecha_apertura?: unknown;
+  dias_credito?: unknown;
+  vencimiento_credito?: unknown;
+  monto_pagado_usd?: unknown;
+  saldo_pendiente_usd?: unknown;
+  estatus_pago?: unknown;
+  num_motos_inicial?: unknown;
+  fecha_renovacion_contrato?: unknown;
+  observaciones?: unknown;
+  fuente?: unknown;
+}) {
+  return {
+    persona_contacto: validateOpcionalString(input.persona_contacto, 'persona_contacto'),
+    contrato_firmado: validateOpcionalBoolean(input.contrato_firmado, 'contrato_firmado'),
+    monto_franquicia_usd: validateOpcionalNumber(input.monto_franquicia_usd, 'monto_franquicia_usd'),
+    forma_pago: validateOpcionalString(input.forma_pago, 'forma_pago'),
+    fecha_apertura: validateFechaOpcional(input.fecha_apertura, 'fecha_apertura'),
+    dias_credito: validateOpcionalEntero(input.dias_credito, 'dias_credito'),
+    vencimiento_credito: validateFechaOpcional(input.vencimiento_credito, 'vencimiento_credito'),
+    monto_pagado_usd: validateOpcionalNumber(input.monto_pagado_usd, 'monto_pagado_usd'),
+    saldo_pendiente_usd: validateOpcionalNumber(input.saldo_pendiente_usd, 'saldo_pendiente_usd'),
+    estatus_pago: validateOpcionalString(input.estatus_pago, 'estatus_pago'),
+    num_motos_inicial: validateOpcionalEntero(input.num_motos_inicial, 'num_motos_inicial'),
+    fecha_renovacion_contrato: validateFechaOpcional(
+      input.fecha_renovacion_contrato,
+      'fecha_renovacion_contrato'
+    ),
+    observaciones: validateOpcionalString(input.observaciones, 'observaciones'),
+    fuente: validateOpcionalString(input.fuente, 'fuente'),
+  };
+}
+
 function validateRIF(value: unknown, campo: string): string {
   const texto = typeof value === 'string' ? value.trim() : ''
   if (!texto) {
@@ -220,6 +308,7 @@ export async function createConcesionario(input: CreateConcesionarioInput, token
     input.tier_inversion && isTipoInversion(input.tier_inversion) ? input.tier_inversion : null;
   const montoInversion = validateMontoInversion(input.monto_inversion);
   const hitosApertura = validateHitosApertura(input.hitos_apertura) ?? [];
+  const ficha = validarFichaControl(input);
 
   const now = new Date().toISOString();
   const cliente = getSupabaseConToken(token);
@@ -245,6 +334,20 @@ export async function createConcesionario(input: CreateConcesionarioInput, token
       tier_inversion: tierInversion,
       monto_inversion: montoInversion,
       hitos_apertura: hitosApertura,
+      persona_contacto: ficha.persona_contacto,
+      contrato_firmado: ficha.contrato_firmado,
+      monto_franquicia_usd: ficha.monto_franquicia_usd,
+      forma_pago: ficha.forma_pago,
+      fecha_apertura: ficha.fecha_apertura,
+      dias_credito: ficha.dias_credito,
+      vencimiento_credito: ficha.vencimiento_credito,
+      monto_pagado_usd: ficha.monto_pagado_usd,
+      saldo_pendiente_usd: ficha.saldo_pendiente_usd,
+      estatus_pago: ficha.estatus_pago,
+      num_motos_inicial: ficha.num_motos_inicial,
+      fecha_renovacion_contrato: ficha.fecha_renovacion_contrato,
+      observaciones: ficha.observaciones,
+      fuente: ficha.fuente,
       created_at: now,
       updated_at: now,
     })
@@ -330,16 +433,69 @@ export async function updateConcesionario(
     updates.metadatos = input.metadatos;
   }
   if (input.tier_inversion !== undefined) {
-    if (!isTipoInversion(input.tier_inversion)) {
+    // El formulario envía null cuando el nivel queda vacío: se guarda null
+    // en vez de rechazar la edición completa.
+    if (input.tier_inversion === null || (input.tier_inversion as unknown) === '') {
+      updates.tier_inversion = null;
+    } else if (isTipoInversion(input.tier_inversion)) {
+      updates.tier_inversion = input.tier_inversion;
+    } else {
       throw new ApiError(`Nivel de inversión inválido. Valores válidos: ${TIPOS_INVERSION_VALIDOS.join(', ')}`, 400);
     }
-    updates.tier_inversion = input.tier_inversion;
   }
   if (input.monto_inversion !== undefined) {
     updates.monto_inversion = validateMontoInversion(input.monto_inversion);
   }
   if (input.hitos_apertura !== undefined) {
     updates.hitos_apertura = validateHitosApertura(input.hitos_apertura);
+  }
+  if (input.persona_contacto !== undefined) {
+    updates.persona_contacto = validateOpcionalString(input.persona_contacto, 'persona_contacto');
+  }
+  if (input.contrato_firmado !== undefined) {
+    updates.contrato_firmado = validateOpcionalBoolean(input.contrato_firmado, 'contrato_firmado');
+  }
+  if (input.monto_franquicia_usd !== undefined) {
+    updates.monto_franquicia_usd = validateOpcionalNumber(
+      input.monto_franquicia_usd,
+      'monto_franquicia_usd'
+    );
+  }
+  if (input.forma_pago !== undefined) {
+    updates.forma_pago = validateOpcionalString(input.forma_pago, 'forma_pago');
+  }
+  if (input.fecha_apertura !== undefined) {
+    updates.fecha_apertura = validateFechaOpcional(input.fecha_apertura, 'fecha_apertura');
+  }
+  if (input.dias_credito !== undefined) {
+    updates.dias_credito = validateOpcionalEntero(input.dias_credito, 'dias_credito');
+  }
+  if (input.vencimiento_credito !== undefined) {
+    updates.vencimiento_credito = validateFechaOpcional(input.vencimiento_credito, 'vencimiento_credito');
+  }
+  if (input.monto_pagado_usd !== undefined) {
+    updates.monto_pagado_usd = validateOpcionalNumber(input.monto_pagado_usd, 'monto_pagado_usd');
+  }
+  if (input.saldo_pendiente_usd !== undefined) {
+    updates.saldo_pendiente_usd = validateOpcionalNumber(input.saldo_pendiente_usd, 'saldo_pendiente_usd');
+  }
+  if (input.estatus_pago !== undefined) {
+    updates.estatus_pago = validateOpcionalString(input.estatus_pago, 'estatus_pago');
+  }
+  if (input.num_motos_inicial !== undefined) {
+    updates.num_motos_inicial = validateOpcionalEntero(input.num_motos_inicial, 'num_motos_inicial');
+  }
+  if (input.fecha_renovacion_contrato !== undefined) {
+    updates.fecha_renovacion_contrato = validateFechaOpcional(
+      input.fecha_renovacion_contrato,
+      'fecha_renovacion_contrato'
+    );
+  }
+  if (input.observaciones !== undefined) {
+    updates.observaciones = validateOpcionalString(input.observaciones, 'observaciones');
+  }
+  if (input.fuente !== undefined) {
+    updates.fuente = validateOpcionalString(input.fuente, 'fuente');
   }
 
   const cliente = getSupabaseConToken(token);
