@@ -542,6 +542,7 @@ Columnas añadidas a `concesionarios` para capturar el consolidado Excel
 | `saldo_pendiente_usd` | NUMERIC >= 0 | Saldo pendiente en US$ |
 | `estatus_pago` | TEXT | Cancelado, Al día, Pendiente, Otro |
 | `num_motos_inicial` | INTEGER >= 0 | Motos del inventario inicial |
+| `metros_cuadrados` | NUMERIC >= 0 | Superficie del local en m² (migración 024) |
 | `fecha_renovacion_contrato` | DATE | Renovación del contrato |
 | `observaciones` | TEXT | Observaciones de la ficha |
 | `fuente` | TEXT | Control + Reporte / Solo Reporte / Solo Control |

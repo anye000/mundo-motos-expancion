@@ -59,6 +59,7 @@ interface FormConcesionario {
   saldo_pendiente_usd: string
   estatus_pago: string
   num_motos_inicial: string
+  metros_cuadrados: string
   fecha_renovacion_contrato: string
   observaciones: string
   fuente: string
@@ -92,6 +93,7 @@ const FORM_INICIAL: FormConcesionario = {
   saldo_pendiente_usd: '',
   estatus_pago: '',
   num_motos_inicial: '',
+  metros_cuadrados: '',
   fecha_renovacion_contrato: '',
   observaciones: '',
   fuente: '',
@@ -185,6 +187,8 @@ function aFormulario(concesionario: Concesionario): FormConcesionario {
     estatus_pago: concesionario.estatus_pago ?? '',
     num_motos_inicial:
       concesionario.num_motos_inicial != null ? String(concesionario.num_motos_inicial) : '',
+    metros_cuadrados:
+      concesionario.metros_cuadrados != null ? String(concesionario.metros_cuadrados) : '',
     fecha_renovacion_contrato: concesionario.fecha_renovacion_contrato ?? '',
     observaciones: concesionario.observaciones ?? '',
     fuente: concesionario.fuente ?? '',
@@ -396,6 +400,7 @@ export function ConcesionarioModal({
       ['monto_franquicia_usd', 'Monto franquicia (US$)'],
       ['monto_pagado_usd', 'Monto pagado (US$)'],
       ['saldo_pendiente_usd', 'Saldo pendiente (US$)'],
+      ['metros_cuadrados', 'Metros cuadrados (m²)'],
     ]
     for (const [campo, etiqueta] of montosUsd) {
       const valor = form[campo as 'monto_franquicia_usd'].trim()
@@ -462,6 +467,8 @@ export function ConcesionarioModal({
         estatus_pago: form.estatus_pago || null,
         num_motos_inicial:
           form.num_motos_inicial.trim() !== '' ? Number(form.num_motos_inicial) : null,
+        metros_cuadrados:
+          form.metros_cuadrados.trim() !== '' ? Number(form.metros_cuadrados) : null,
         fecha_renovacion_contrato: form.fecha_renovacion_contrato || null,
         observaciones: form.observaciones.trim() || null,
         fuente: form.fuente || null,
@@ -899,6 +906,20 @@ export function ConcesionarioModal({
                   value={form.num_motos_inicial}
                   onChange={(e) => actualizar('num_motos_inicial', e.target.value)}
                   placeholder="30"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-sm font-medium text-mm-gray-300">
+                  Metros cuadrados (m²)
+                </span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  className="input-dark"
+                  value={form.metros_cuadrados}
+                  onChange={(e) => actualizar('metros_cuadrados', e.target.value)}
+                  placeholder="120"
                 />
               </label>
               <label className="block">

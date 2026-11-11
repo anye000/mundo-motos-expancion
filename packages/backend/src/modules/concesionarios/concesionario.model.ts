@@ -73,6 +73,8 @@ export interface Concesionario {
   estatus_pago: string | null;
   /** Número de motos del inventario inicial. */
   num_motos_inicial: number | null;
+  /** Superficie del local en metros cuadrados. */
+  metros_cuadrados: number | null;
   /** Fecha de renovación del contrato de franquicia. */
   fecha_renovacion_contrato: string | null;
   /** Observaciones de la ficha de control. */
@@ -115,6 +117,7 @@ export interface CreateConcesionarioInput {
   saldo_pendiente_usd?: number | null;
   estatus_pago?: string | null;
   num_motos_inicial?: number | null;
+  metros_cuadrados?: number | null;
   fecha_renovacion_contrato?: string | null;
   observaciones?: string | null;
   fuente?: string | null;
@@ -151,6 +154,7 @@ export interface UpdateConcesionarioInput {
   saldo_pendiente_usd?: number | null;
   estatus_pago?: string | null;
   num_motos_inicial?: number | null;
+  metros_cuadrados?: number | null;
   fecha_renovacion_contrato?: string | null;
   observaciones?: string | null;
   fuente?: string | null;

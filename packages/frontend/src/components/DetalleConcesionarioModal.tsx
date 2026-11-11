@@ -236,6 +236,14 @@ export function DetalleConcesionarioModal({
                     }
                   />
                   <CampoFicha
+                    etiqueta="Metros cuadrados"
+                    valor={
+                      concesionario.metros_cuadrados != null
+                        ? `${concesionario.metros_cuadrados} m²`
+                        : null
+                    }
+                  />
+                  <CampoFicha
                     etiqueta="Renovación de contrato"
                     valor={concesionario.fecha_renovacion_contrato}
                   />

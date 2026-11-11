@@ -150,6 +150,7 @@ function validarFichaControl(input: {
   saldo_pendiente_usd?: unknown;
   estatus_pago?: unknown;
   num_motos_inicial?: unknown;
+  metros_cuadrados?: unknown;
   fecha_renovacion_contrato?: unknown;
   observaciones?: unknown;
   fuente?: unknown;
@@ -166,6 +167,7 @@ function validarFichaControl(input: {
     saldo_pendiente_usd: validateOpcionalNumber(input.saldo_pendiente_usd, 'saldo_pendiente_usd'),
     estatus_pago: validateOpcionalString(input.estatus_pago, 'estatus_pago'),
     num_motos_inicial: validateOpcionalEntero(input.num_motos_inicial, 'num_motos_inicial'),
+    metros_cuadrados: validateOpcionalNumber(input.metros_cuadrados, 'metros_cuadrados'),
     fecha_renovacion_contrato: validateFechaOpcional(
       input.fecha_renovacion_contrato,
       'fecha_renovacion_contrato'
@@ -345,6 +347,7 @@ export async function createConcesionario(input: CreateConcesionarioInput, token
       saldo_pendiente_usd: ficha.saldo_pendiente_usd,
       estatus_pago: ficha.estatus_pago,
       num_motos_inicial: ficha.num_motos_inicial,
+      metros_cuadrados: ficha.metros_cuadrados,
       fecha_renovacion_contrato: ficha.fecha_renovacion_contrato,
       observaciones: ficha.observaciones,
       fuente: ficha.fuente,
@@ -484,6 +487,9 @@ export async function updateConcesionario(
   }
   if (input.num_motos_inicial !== undefined) {
     updates.num_motos_inicial = validateOpcionalEntero(input.num_motos_inicial, 'num_motos_inicial');
+  }
+  if (input.metros_cuadrados !== undefined) {
+    updates.metros_cuadrados = validateOpcionalNumber(input.metros_cuadrados, 'metros_cuadrados');
   }
   if (input.fecha_renovacion_contrato !== undefined) {
     updates.fecha_renovacion_contrato = validateFechaOpcional(
