@@ -521,3 +521,32 @@ SELECT 'concesionarios', COUNT(*) FROM concesionarios WHERE deleted_at IS NOT NU
 - [Supabase Docs](https://supabase.com/docs)
 - [UUID vs SERIAL](https://www.postgresql.org/docs/current/datatype-uuid.html)
 - [JSONB en PostgreSQL](https://www.postgresql.org/docs/current/datatype-json.html)
+
+---
+
+## Ficha de control de franquicias y aliados 2026 (migración 023)
+
+Columnas añadidas a `concesionarios` para capturar el consolidado Excel
+`Control_Franquicias_Aliados2026_MundoMoto.xlsx` (hoja "Control de Aliados"):
+
+| Columna | Tipo | Descripción |
+|---|---|---|
+| `persona_contacto` | TEXT | Persona de contacto del aliado |
+| `contrato_firmado` | BOOLEAN | Contrato de franquicia firmado (Sí/No) |
+| `monto_franquicia_usd` | NUMERIC >= 0 | Monto de la franquicia en US$ |
+| `forma_pago` | TEXT | Contado, Crédito, Mixto, Otro |
+| `fecha_apertura` | DATE | Fecha real de apertura/contrato |
+| `dias_credito` | INTEGER >= 0 | Días de crédito para repuestos |
+| `vencimiento_credito` | DATE | Vencimiento del crédito |
+| `monto_pagado_usd` | NUMERIC >= 0 | Monto pagado en US$ |
+| `saldo_pendiente_usd` | NUMERIC >= 0 | Saldo pendiente en US$ |
+| `estatus_pago` | TEXT | Cancelado, Al día, Pendiente, Otro |
+| `num_motos_inicial` | INTEGER >= 0 | Motos del inventario inicial |
+| `fecha_renovacion_contrato` | DATE | Renovación del contrato |
+| `observaciones` | TEXT | Observaciones de la ficha |
+| `fuente` | TEXT | Control + Reporte / Solo Reporte / Solo Control |
+
+La migración también reemplaza la RPC `actualizar_concesionario_con_historial`
+para ampliar su lista blanca de columnas (incluye los campos 022 y 023) y
+tipar cada grupo (fechas, numéricos, enteros, booleanos, jsonb) con
+conversión segura de `''` a `NULL`.
